@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comparador de Armas - Cabal Online</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">MVP local</p>
+          <h1>Comparador de armas para Mago</h1>
+          <p class="hero-text">
+            Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
+          </p>
+        </div>
+
+        <aside class="source-card" aria-label="Fonte da fórmula inicial">
+          <span>Base inicial</span>
+          <strong>Mr. Wormy Combat Power Calculator</strong>
+          <p>Para classes mágicas, Ataque Mágico entra como "Todos os Ataques" e Amp. Mágica como "Todas as Téc. Amp.".</p>
+        </aside>
+      </section>
+
+      <section class="result-panel" aria-live="polite">
+        <div>
+          <p class="label">Diferença estimada</p>
+          <strong id="total-difference">0</strong>
+        </div>
+        <div class="result-meta">
+          <span id="result-direction">Sem diferença calculada</span>
+          <span id="changed-fields">0 atributos alterados</span>
+        </div>
+      </section>
+
+      <section class="grid two-columns">
+        <form class="card" id="current-form">
+          <div class="card-header">
+            <div>
+              <p class="label">Equipado agora</p>
+              <h2>Arma atual</h2>
+            </div>
+          </div>
+          <div class="item-name-row">
+            <label for="current-name">Nome da arma</label>
+            <input id="current-name" name="current-name" type="text" placeholder="Ex.: Orbe Palladium +15" autocomplete="off" />
+          </div>
+          <div class="attribute-list" id="current-fields"></div>
+        </form>
+
+        <form class="card" id="candidate-form">
+          <div class="card-header">
+            <div>
+              <p class="label">Item desejado</p>
+              <h2>Arma nova</h2>
+            </div>
+          </div>
+          <div class="item-name-row">
+            <label for="candidate-name">Nome da arma</label>
+            <input id="candidate-name" name="candidate-name" type="text" placeholder="Ex.: Cristal Demonita +18" autocomplete="off" />
+          </div>
+          <div class="attribute-list" id="candidate-fields"></div>
+        </form>
+      </section>
+
+      <section class="grid details-grid">
+        <article class="card">
+          <div class="card-header compact">
+            <div>
+              <p class="label">Impacto por atributo</p>
+              <h2>Resumo da troca</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Atributo</th>
+                  <th>Dif.</th>
+                  <th>Peso</th>
+                  <th>PC</th>
+                </tr>
+              </thead>
+              <tbody id="impact-table"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card weights-card">
+          <div class="card-header compact">
+            <div>
+              <p class="label">Calibração</p>
+              <h2>Pesos do cálculo</h2>
+            </div>
+            <button class="secondary-button" type="button" id="reset-weights">Restaurar</button>
+          </div>
+          <p class="hint">
+            Ajuste estes valores quando você medir diferenças reais no jogo. O peso representa quantos Pontos de Combate 1 ponto ou 1% daquele atributo gera.
+          </p>
+          <div class="attribute-list weights-list" id="weight-fields"></div>
+        </article>
+      </section>
+
+      <section class="grid two-columns bottom-grid">
+        <article class="card calibration-card">
+          <div class="card-header compact">
+            <div>
+              <p class="label">Conferência real</p>
+              <h2>Comparar com o jogo</h2>
+            </div>
+          </div>
+          <label for="real-difference">Diferença real de PC vista no jogo</label>
+          <input id="real-difference" type="number" step="0.1" placeholder="Ex.: 3842" />
+          <div class="calibration-output" id="calibration-output">Informe a diferença real para ver o erro da estimativa.</div>
+          <button type="button" id="save-validation">Registrar teste</button>
+        </article>
+
+        <article class="card actions-card">
+          <div class="card-header compact">
+            <div>
+              <p class="label">Dados locais</p>
+              <h2>Controles</h2>
+            </div>
+          </div>
+          <p class="hint">Os valores são salvos automaticamente neste navegador.</p>
+          <div class="button-row">
+            <button type="button" id="clear-items">Limpar armas</button>
+            <button class="secondary-button" type="button" id="clear-all">Zerar tudo</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="card validation-card">
+        <div class="card-header compact">
+          <div>
+            <p class="label">Precisão da fórmula</p>
+            <h2>Histórico de validações</h2>
+          </div>
+          <button class="secondary-button" type="button" id="clear-validation-history">Limpar histórico</button>
+        </div>
+        <div class="validation-summary" id="validation-summary"></div>
+        <div class="table-wrap">
+          <table class="validation-table">
+            <thead>
+              <tr>
+                <th>Teste</th>
+                <th>Estimativa</th>
+                <th>Real</th>
+                <th>Erro</th>
+                <th>Erro %</th>
+              </tr>
+            </thead>
+            <tbody id="validation-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
