@@ -10,7 +10,7 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">MVP local</p>
+          <p class="eyebrow">v0.3 local</p>
           <h1>Comparador de armas para Mago</h1>
           <p class="hero-text">
             Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
@@ -101,6 +101,47 @@
           </p>
           <div class="attribute-list weights-list" id="weight-fields"></div>
         </article>
+      </section>
+
+      <section class="card cost-card">
+        <div class="card-header compact">
+          <div>
+            <p class="label">Mercado</p>
+            <h2>Custo-benefício da troca</h2>
+          </div>
+        </div>
+        <p class="hint">Informe o preço em kk ou bi. Se preencher o preço da arma atual, a ferramenta calcula o custo líquido da troca.</p>
+
+        <div class="price-grid">
+          <div class="price-field">
+            <label for="current-price-value">Preço da arma atual</label>
+            <div class="money-row">
+              <input id="current-price-value" data-market="currentPriceValue" type="text" inputmode="decimal" placeholder="Ex.: 500" autocomplete="off" />
+              <select id="current-price-unit" data-market="currentPriceUnit" aria-label="Unidade do preço da arma atual">
+                <option value="kk">kk</option>
+                <option value="bi">bi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="price-field">
+            <label for="candidate-price-value">Preço da arma nova</label>
+            <div class="money-row">
+              <input id="candidate-price-value" data-market="candidatePriceValue" type="text" inputmode="decimal" placeholder="Ex.: 1,5" autocomplete="off" />
+              <select id="candidate-price-unit" data-market="candidatePriceUnit" aria-label="Unidade do preço da arma nova">
+                <option value="kk">kk</option>
+                <option value="bi">bi</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="item-name-row market-note-row">
+          <label for="market-note">Observação do item</label>
+          <input id="market-note" data-market="note" type="text" placeholder="Ex.: vendedor, canal, link, negociação" autocomplete="off" />
+        </div>
+
+        <div class="cost-summary" id="cost-summary"></div>
       </section>
 
       <section class="grid two-columns bottom-grid">

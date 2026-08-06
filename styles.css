@@ -29,7 +29,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -54,7 +55,8 @@ button:hover {
   background: #223151;
 }
 
-input {
+input,
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 0.8rem;
@@ -64,9 +66,14 @@ input {
   outline: none;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16);
+}
+
+select {
+  cursor: pointer;
 }
 
 label {
@@ -212,6 +219,7 @@ h2 {
   margin-top: 1.25rem;
 }
 
+.cost-card,
 .validation-card {
   margin-top: 1.25rem;
 }
@@ -369,6 +377,86 @@ td {
   min-width: 760px;
 }
 
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.price-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.money-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 0.6rem;
+}
+
+.market-note-row {
+  margin-bottom: 1rem;
+}
+
+.cost-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.cost-stat,
+.cost-evaluation,
+.cost-empty {
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 1rem;
+  padding: 0.95rem;
+  background: rgba(6, 12, 27, 0.45);
+}
+
+.cost-empty {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
+.cost-stat span,
+.cost-stat small,
+.cost-evaluation span,
+.cost-evaluation small {
+  display: block;
+  color: var(--muted);
+}
+
+.cost-stat span,
+.cost-evaluation span {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cost-stat strong,
+.cost-evaluation strong {
+  display: block;
+  margin: 0.25rem 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1.08;
+}
+
+.cost-evaluation.negative strong {
+  color: var(--danger);
+}
+
+.cost-evaluation.neutral strong {
+  color: var(--warning);
+}
+
+.cost-stat small,
+.cost-evaluation small {
+  font-size: 0.82rem;
+}
+
 @media (max-width: 900px) {
   .hero,
   .two-columns,
@@ -386,6 +474,11 @@ td {
   }
 
   .validation-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .price-grid,
+  .cost-summary {
     grid-template-columns: 1fr;
   }
 }

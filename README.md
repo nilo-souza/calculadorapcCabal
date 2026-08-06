@@ -1,6 +1,8 @@
 # Comparador de Armas - Cabal Online
 
-MVP local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago.
+App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
+
+Versão atual: `v0.3`.
 
 ## Como usar
 
@@ -8,8 +10,18 @@ MVP local para estimar a diferença de Pontos de Combate ao trocar uma arma de M
 2. Preencha os atributos da arma atual.
 3. Preencha os atributos da arma nova.
 4. Confira a diferença estimada de Pontos de Combate.
-5. Se tiver a diferença real vista no jogo, informe no campo "Comparar com o jogo" para medir o erro.
-6. Clique em "Registrar teste" para guardar a validação no histórico e acompanhar o erro médio.
+5. Informe o preço da arma nova em `kk` ou `bi` para calcular o custo-benefício.
+6. Opcionalmente, informe o preço da arma atual para calcular o custo líquido da troca.
+7. Se tiver a diferença real vista no jogo, informe no campo "Comparar com o jogo" para medir o erro.
+8. Clique em "Registrar teste" para guardar a validação no histórico e acompanhar o erro médio.
+
+Exemplos de preço:
+
+```text
+500 kk = 0,5 bi
+250 kk = 0,25 bi
+1,5 bi = 1.500 kk
+```
 
 ## Fórmula inicial
 
@@ -23,6 +35,49 @@ Os pesos iniciais foram baseados na calculadora pública do Mr. Wormy para Comba
 
 Todos os pesos podem ser editados na tela. Os dados ficam salvos no navegador via `localStorage`.
 
+## Custo-benefício
+
+A versão `v0.3` calcula:
+
+- Preço da arma nova.
+- Custo líquido da troca, quando o preço da arma atual é informado.
+- PC ganho por bilhão de Alzes.
+- Avaliação automática: excelente, bom, razoável, caro pelo ganho ou não compensa pelo PC.
+
+O cálculo principal é:
+
+```text
+Eficiência = diferença estimada de PC / custo em bilhões de Alzes
+```
+
+Se o preço da arma atual for informado, o custo usado é:
+
+```text
+Custo líquido = preço da arma nova - preço da arma atual
+```
+
 ## Validação atual
 
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
+
+## Changelog
+
+### v0.3
+
+- Adicionado cálculo de custo-benefício.
+- Adicionados campos de preço em `kk` e `bi`.
+- Adicionado cálculo de PC por bilhão de Alzes.
+- Adicionada avaliação automática de compra.
+- Adicionado campo de observação do item.
+
+### v0.2
+
+- Adicionado histórico de validações.
+- Adicionado erro médio e erro percentual médio.
+- Adicionado registro de testes com diferença real vista no jogo.
+
+### v0.1
+
+- Criado comparador manual de armas para Mago.
+- Adicionados pesos editáveis por atributo.
+- Adicionado cálculo de diferença estimada de Pontos de Combate.

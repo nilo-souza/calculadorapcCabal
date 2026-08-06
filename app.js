@@ -97,6 +97,14 @@ const seedValidationHistory = [
   },
 ];
 
+const defaultMarket = {
+  currentPriceValue: "",
+  currentPriceUnit: "kk",
+  candidatePriceValue: "",
+  candidatePriceUnit: "kk",
+  note: "",
+};
+
 const defaultState = createDefaultState(seedValidationHistory);
 
 let state = loadState();
@@ -121,6 +129,7 @@ const elements = {
   clearValidationHistory: document.querySelector("#clear-validation-history"),
   validationSummary: document.querySelector("#validation-summary"),
   validationTable: document.querySelector("#validation-table"),
+  costSummary: document.querySelector("#cost-summary"),
 };
 
 renderFields();
@@ -143,6 +152,18 @@ function renderFields() {
   document.querySelectorAll("[data-weight]").forEach((input) => {
     input.addEventListener("input", () => {
       state.weights[input.dataset.weight] = input.value;
+      persistAndRender();
+    });
+  });
+
+  document.querySelectorAll("[data-market]").forEach((input) => {
+    input.addEventListener("input", () => {
+      state.market[input.dataset.market] = input.value;
+      persistAndRender();
+    });
+
+    input.addEventListener("change", () => {
+      state.market[input.dataset.market] = input.value;
       persistAndRender();
     });
   });
@@ -230,6 +251,7 @@ function bindStaticEvents() {
     state.current = Object.fromEntries(attributes.map((attribute) => [attribute.key, ""]));
     state.candidate = Object.fromEntries(attributes.map((attribute) => [attribute.key, ""]));
     state.realDifference = "";
+    state.market = { ...defaultMarket };
     syncFormValues();
     persistAndRender();
   });
@@ -245,6 +267,10 @@ function syncFormValues() {
   elements.currentName.value = state.currentName || "";
   elements.candidateName.value = state.candidateName || "";
   elements.realDifference.value = state.realDifference || "";
+
+  Object.entries(state.market).forEach(([key, value]) => {
+    setInputValue(`[data-market="${key}"]`, value);
+  });
 
   attributes.forEach((attribute) => {
     setInputValue(`[data-item="current"][data-attribute="${attribute.key}"]`, state.current[attribute.key]);
@@ -278,6 +304,7 @@ function calculateAndRender() {
   renderSummary(total, changedRows.length);
   renderImpactTable(rows);
   renderCalibration(total);
+  renderCostBenefit(total);
   renderValidationHistory();
 }
 
@@ -381,6 +408,101 @@ function renderValidationHistory() {
     .join("");
 }
 
+function renderCostBenefit(total) {
+  const currentPriceBi = priceToBi(state.market.currentPriceValue, state.market.currentPriceUnit);
+  const candidatePriceBi = priceToBi(state.market.candidatePriceValue, state.market.candidatePriceUnit);
+
+  if (!candidatePriceBi || candidatePriceBi <= 0) {
+    elements.costSummary.innerHTML = `
+      <div class="cost-empty">Informe o preço da arma nova para calcular PC por bi e avaliar o custo-benefício.</div>
+    `;
+    return;
+  }
+
+  const hasCurrentPrice = currentPriceBi !== null && currentPriceBi > 0;
+  const investmentBi = hasCurrentPrice ? candidatePriceBi - currentPriceBi : candidatePriceBi;
+  const efficiency = investmentBi > 0 ? total / investmentBi : null;
+  const evaluation = getCostEvaluation(total, investmentBi, efficiency);
+  const investmentHint = hasCurrentPrice ? "Preço novo - preço atual" : "Preço cheio da arma nova";
+
+  elements.costSummary.innerHTML = `
+    ${renderCostStat("Preço novo", formatAlzes(candidatePriceBi), "Valor informado para a arma candidata")}
+    ${renderCostStat("Custo líquido", formatSignedAlzes(investmentBi), investmentHint)}
+    ${renderCostStat("Eficiência", efficiency === null ? "Indisponível" : `${formatNumber(efficiency)} PC/bi`, "PC ganho por bilhão de Alzes")}
+    <div class="cost-evaluation ${evaluation.tone}">
+      <span>Avaliação</span>
+      <strong>${evaluation.label}</strong>
+      <small>${evaluation.detail}</small>
+    </div>
+  `;
+}
+
+function renderCostStat(label, value, hint) {
+  return `
+    <div class="cost-stat">
+      <span>${label}</span>
+      <strong>${value}</strong>
+      <small>${hint}</small>
+    </div>
+  `;
+}
+
+function getCostEvaluation(total, investmentBi, efficiency) {
+  if (total <= 0) {
+    return {
+      label: "Não compensa pelo PC",
+      detail: "A troca reduz ou não altera os Pontos de Combate.",
+      tone: "negative",
+    };
+  }
+
+  if (investmentBi < 0) {
+    return {
+      label: "Excelente custo-benefício",
+      detail: "Ganha PC e a arma nova é mais barata que a atual.",
+      tone: "positive",
+    };
+  }
+
+  if (investmentBi === 0) {
+    return {
+      label: "Excelente custo-benefício",
+      detail: "Ganha PC sem custo líquido informado.",
+      tone: "positive",
+    };
+  }
+
+  if (efficiency >= 5000) {
+    return {
+      label: "Excelente custo-benefício",
+      detail: "Muito PC ganho por bilhão investido.",
+      tone: "positive",
+    };
+  }
+
+  if (efficiency >= 2000) {
+    return {
+      label: "Bom custo-benefício",
+      detail: "Ganho de PC consistente para o preço.",
+      tone: "positive",
+    };
+  }
+
+  if (efficiency >= 1000) {
+    return {
+      label: "Custo-benefício razoável",
+      detail: "Pode valer se o item tiver outros benefícios.",
+      tone: "neutral",
+    };
+  }
+
+  return {
+    label: "Caro pelo ganho",
+    detail: "O ganho de PC é baixo para o preço informado.",
+    tone: "negative",
+  };
+}
+
 function renderValidationStat(label, value, hint) {
   return `
     <div class="validation-stat">
@@ -411,6 +533,7 @@ function createDefaultState(validationHistory) {
     candidate: Object.fromEntries(attributes.map((attribute) => [attribute.key, ""])),
     weights: Object.fromEntries(attributes.map((attribute) => [attribute.key, attribute.defaultWeight])),
     realDifference: "",
+    market: { ...defaultMarket },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -429,6 +552,7 @@ function loadState() {
       current: { ...defaultState.current, ...storedState.current },
       candidate: { ...defaultState.candidate, ...storedState.candidate },
       weights: { ...defaultState.weights, ...storedState.weights },
+      market: { ...defaultState.market, ...storedState.market },
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };
   } catch {
@@ -453,6 +577,31 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function priceToBi(value, unit) {
+  const number = toFlexibleNumber(value);
+
+  if (number === null) {
+    return null;
+  }
+
+  return unit === "kk" ? number / 1000 : number;
+}
+
+function toFlexibleNumber(value) {
+  const rawValue = String(value ?? "").trim();
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const normalizedValue = rawValue.includes(",")
+    ? rawValue.replace(/\./g, "").replace(",", ".")
+    : rawValue;
+  const number = Number.parseFloat(normalizedValue);
+
+  return Number.isFinite(number) ? number : null;
+}
+
 function formatSigned(value) {
   if (value === 0) {
     return "0";
@@ -465,6 +614,22 @@ function formatNumber(value, maximumFractionDigits = 1) {
   return new Intl.NumberFormat("pt-BR", {
     maximumFractionDigits,
   }).format(value);
+}
+
+function formatAlzes(valueBi) {
+  if (Math.abs(valueBi) < 1) {
+    return `${formatNumber(valueBi * 1000, 1)} kk (${formatNumber(valueBi, 3)} bi)`;
+  }
+
+  return `${formatNumber(valueBi, 3)} bi`;
+}
+
+function formatSignedAlzes(valueBi) {
+  if (valueBi === 0) {
+    return "0";
+  }
+
+  return `${valueBi > 0 ? "+" : "-"}${formatAlzes(Math.abs(valueBi))}`;
 }
 
 function escapeHtml(value) {
