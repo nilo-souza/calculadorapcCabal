@@ -422,6 +422,9 @@ const elements = {
   applyOcr: document.querySelector("#apply-ocr"),
   clearOcr: document.querySelector("#clear-ocr"),
   ocrStatus: document.querySelector("#ocr-status"),
+  deleteLineDialog: document.querySelector("#delete-line-dialog"),
+  confirmDeleteLine: document.querySelector("#confirm-delete-line"),
+  cancelDeleteLine: document.querySelector("#cancel-delete-line"),
 };
 
 renderFields();
@@ -1645,7 +1648,7 @@ function renderRecognizedOcrLines(matches) {
                   <code>${escapeHtml(match.line)}</code>
                   <input data-ocr-match-value="${escapeHtml(match.id)}" type="number" step="0.1" value="${escapeHtml(match.value)}" aria-label="Valor reconhecido para ${escapeHtml(group.label)}" />
                   <button class="secondary-button table-button icon-button" type="button" data-delete-ocr-match="${escapeHtml(match.id)}" title="Excluir" aria-label="Excluir linha reconhecida">&#128465;</button>
-                  ${match.manual || match.shared ? `<small>${[match.manual ? "Manual" : "", match.shared ? "Todos os ataques" : ""].filter(Boolean).join(" / ")}</small>` : ""}
+                  ${match.manual ? `<small>Manual</small>` : ""}
                 </div>
               `)
               .join("")}
@@ -1713,7 +1716,7 @@ function renderAttributeOptions(selectedKey) {
     .join("");
 }
 
-function handleOcrStatusClick(event) {
+async function handleOcrStatusClick(event) {
   if (!(event.target instanceof Element)) {
     return;
   }
@@ -1721,7 +1724,7 @@ function handleOcrStatusClick(event) {
   const deleteButton = event.target.closest("[data-delete-ocr-match]");
 
   if (deleteButton) {
-    if (!confirmOcrLineDeletion()) {
+    if (!(await confirmOcrLineDeletion())) {
       return;
     }
 
@@ -1742,7 +1745,7 @@ function handleOcrStatusClick(event) {
   const deleteIgnoredButton = event.target.closest("[data-delete-ignored-line]");
 
   if (deleteIgnoredButton) {
-    if (!confirmOcrLineDeletion()) {
+    if (!(await confirmOcrLineDeletion())) {
       return;
     }
 
@@ -1758,7 +1761,44 @@ function handleOcrStatusClick(event) {
 }
 
 function confirmOcrLineDeletion() {
-  return window.confirm("Esta linha será excluída do relatório OCR. Deseja continuar?");
+  if (!elements.deleteLineDialog?.showModal) {
+    return Promise.resolve(window.confirm("Esta linha será excluída do relatório OCR. Deseja continuar?"));
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const finish = (result) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      elements.confirmDeleteLine.removeEventListener("click", confirm);
+      elements.cancelDeleteLine.removeEventListener("click", cancel);
+      elements.deleteLineDialog.removeEventListener("cancel", cancel);
+      elements.deleteLineDialog.removeEventListener("close", close);
+
+      if (elements.deleteLineDialog.open) {
+        elements.deleteLineDialog.close();
+      }
+
+      resolve(result);
+    };
+
+    const confirm = () => finish(true);
+    const cancel = (event) => {
+      event?.preventDefault();
+      finish(false);
+    };
+    const close = () => finish(false);
+
+    elements.confirmDeleteLine.addEventListener("click", confirm);
+    elements.cancelDeleteLine.addEventListener("click", cancel);
+    elements.deleteLineDialog.addEventListener("cancel", cancel);
+    elements.deleteLineDialog.addEventListener("close", close);
+    elements.deleteLineDialog.showModal();
+  });
 }
 
 function updateRecognizedOcrLine(event) {

@@ -109,7 +109,7 @@ Com os dois testes informados até agora, o erro médio absoluto está em torno 
 - Linhas reconhecidas agora podem ter o valor editado ou ser excluídas antes de aplicar na arma nova.
 - `Aumentou todos os ataques +N` agora entra tanto em `Ataque mágico` quanto em `Ataque físico`; o peso de `Ataque físico` continua `0` por padrão para Mago.
 - Corrigida leitura de valores como `&0`, que o OCR pode gerar no lugar de `80`.
-- Linhas reconhecidas e ignoradas podem ser excluídas com ícone de lixeira e confirmação antes da remoção.
+- Linhas reconhecidas e ignoradas podem ser excluídas com ícone de lixeira e diálogo de confirmação antes da remoção.
 
 ### v0.6.2
 
