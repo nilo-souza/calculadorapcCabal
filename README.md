@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.5.3`.
+Versão atual: `v0.5.4`.
 
 ## Como usar
 
@@ -78,7 +78,7 @@ Fluxo recomendado:
 
 1. Tire um print ou recorte do tooltip do item.
 2. Selecione, arraste ou cole a imagem na área de OCR.
-3. Escolha o modo de leitura: `Contraste`, `Preto e branco`, `Ampliado` ou `Original`.
+3. Use o modo `Preto e branco`, que é o padrão recomendado para tooltips do Cabal.
 4. Clique em "Ler imagem".
 5. Revise o texto reconhecido.
 6. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
@@ -91,6 +91,11 @@ O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carr
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.5.4
+
+- Definido `Preto e branco` como modo padrão do OCR.
+- Ajustada a ordem dos modos para priorizar o melhor resultado observado nos prints do Cabal.
 
 ### v0.5.3
 

@@ -1290,7 +1290,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
-    ocr: { text: "", mode: "contrast" },
+    ocr: { text: "", mode: "threshold" },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -1380,7 +1380,7 @@ function getOcrModeLabel(mode) {
     threshold: "Preto e branco",
   };
 
-  return labels[mode] || labels.contrast;
+  return labels[mode] || labels.threshold;
 }
 
 function getAttributeLabel(key) {
