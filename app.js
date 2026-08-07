@@ -492,21 +492,22 @@ function renderCostBenefit(total) {
 
   if (!candidatePriceBi || candidatePriceBi <= 0) {
     elements.costSummary.innerHTML = `
-      <div class="cost-empty">Informe o preço da arma nova para calcular PC por bi e avaliar o custo-benefício.</div>
+      <div class="cost-empty">Informe o preço da arma nova para calcular PC por kk e avaliar o custo-benefício.</div>
     `;
     return;
   }
 
   const hasCurrentPrice = currentPriceBi !== null && currentPriceBi > 0;
   const investmentBi = hasCurrentPrice ? candidatePriceBi - currentPriceBi : candidatePriceBi;
-  const efficiency = investmentBi > 0 ? total / investmentBi : null;
+  const investmentKk = investmentBi * 1000;
+  const efficiency = investmentKk > 0 ? total / investmentKk : null;
   const evaluation = getCostEvaluation(total, investmentBi, efficiency);
   const investmentHint = hasCurrentPrice ? "Preço novo - preço atual" : "Preço cheio da arma nova";
 
   elements.costSummary.innerHTML = `
     ${renderCostStat("Preço novo", formatAlzes(candidatePriceBi), "Valor informado para a arma candidata")}
     ${renderCostStat("Custo líquido", formatSignedAlzes(investmentBi), investmentHint)}
-    ${renderCostStat("Eficiência", efficiency === null ? "Indisponível" : `${formatNumber(efficiency)} PC/bi`, "PC ganho por bilhão de Alzes")}
+    ${renderCostStat("Eficiência", efficiency === null ? "Indisponível" : `${formatNumber(efficiency, 3)} PC/kk`, "PC ganho por kk de Alzes")}
     <div class="cost-evaluation ${evaluation.tone}">
       <span>Avaliação</span>
       <strong>${evaluation.label}</strong>
@@ -535,7 +536,7 @@ function renderCandidateOptions() {
           <td class="${pcClass}">${formatSigned(option.total)}</td>
           <td>${option.candidatePriceBi === null ? "Sem preço" : formatAlzes(option.candidatePriceBi)}</td>
           <td>${option.investmentBi === null ? "Indisponível" : formatSignedAlzes(option.investmentBi)}</td>
-          <td>${option.efficiency === null ? "Indisponível" : formatNumber(option.efficiency)}</td>
+          <td>${option.efficiency === null ? "Indisponível" : formatNumber(option.efficiency, 3)}</td>
           <td><span class="rating ${option.evaluation.tone}">${option.evaluation.label}</span></td>
           <td>${escapeHtml(option.note || "-")}</td>
           <td>
@@ -557,7 +558,7 @@ function enrichCandidateOption(option) {
   const candidatePriceBi = priceToBi(option.market?.candidatePriceValue, option.market?.candidatePriceUnit || "kk");
   const hasCurrentPrice = currentPriceBi !== null && currentPriceBi > 0;
   const investmentBi = candidatePriceBi === null || candidatePriceBi <= 0 ? null : hasCurrentPrice ? candidatePriceBi - currentPriceBi : candidatePriceBi;
-  const efficiency = investmentBi !== null && investmentBi > 0 ? total / investmentBi : null;
+  const efficiency = investmentBi !== null && investmentBi > 0 ? total / (investmentBi * 1000) : null;
   const evaluation = investmentBi === null ? getMissingPriceEvaluation(total) : getCostEvaluation(total, investmentBi, efficiency);
 
   return {
@@ -646,15 +647,15 @@ function getCostEvaluation(total, investmentBi, efficiency) {
     };
   }
 
-  if (efficiency >= 5000) {
+  if (efficiency >= 5) {
     return {
       label: "Excelente custo-benefício",
-      detail: "Muito PC ganho por bilhão investido.",
+      detail: "Muito PC ganho por kk investido.",
       tone: "positive",
     };
   }
 
-  if (efficiency >= 2000) {
+  if (efficiency >= 2) {
     return {
       label: "Bom custo-benefício",
       detail: "Ganho de PC consistente para o preço.",
@@ -662,7 +663,7 @@ function getCostEvaluation(total, investmentBi, efficiency) {
     };
   }
 
-  if (efficiency >= 1000) {
+  if (efficiency >= 1) {
     return {
       label: "Custo-benefício razoável",
       detail: "Pode valer se o item tiver outros benefícios.",

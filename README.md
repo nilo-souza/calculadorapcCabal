@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.4`.
+Versão atual: `v0.4.1`.
 
 ## Como usar
 
@@ -43,13 +43,13 @@ A partir da versão `v0.3`, a ferramenta calcula:
 
 - Preço da arma nova.
 - Custo líquido da troca, quando o preço da arma atual é informado.
-- PC ganho por bilhão de Alzes.
+- PC ganho por kk de Alzes.
 - Avaliação automática: excelente, bom, razoável, caro pelo ganho ou não compensa pelo PC.
 
 O cálculo principal é:
 
 ```text
-Eficiência = diferença estimada de PC / custo em bilhões de Alzes
+Eficiência = diferença estimada de PC / custo em kk de Alzes
 ```
 
 Se o preço da arma atual for informado, o custo usado é:
@@ -76,6 +76,11 @@ Com os dois testes informados até agora, o erro médio absoluto está em torno 
 
 ## Changelog
 
+### v0.4.1
+
+- Alterada a métrica de eficiência de `PC/bi` para `PC/kk`.
+- Ajustadas as faixas de avaliação automática para a nova unidade.
+
 ### v0.4
 
 - Adicionado cadastro de múltiplas armas candidatas.
@@ -88,7 +93,7 @@ Com os dois testes informados até agora, o erro médio absoluto está em torno 
 
 - Adicionado cálculo de custo-benefício.
 - Adicionados campos de preço em `kk` e `bi`.
-- Adicionado cálculo de PC por bilhão de Alzes.
+- Adicionado cálculo de eficiência por Alzes investido.
 - Adicionada avaliação automática de compra.
 - Adicionado campo de observação do item.
 
