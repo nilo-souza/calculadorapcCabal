@@ -114,11 +114,11 @@ const ocrAttributePatterns = [
   },
   {
     key: "criticalRate",
-    labels: ["taxa critica", "taxa critic", "texa critica", "texa critic", "crit rate", "critical rate"],
+    labels: ["taxa critica", "taxa critic", "ta critica", "ta critic", "texa critica", "texa critic", "crit rate", "critical rate"],
   },
   {
     key: "criticalDamage",
-    labels: ["dano critico", "danos criticos", "crit dmg", "critical damage"],
+    labels: ["dano critico", "dano critic", "danos criticos", "danos critic", "criticos", "crit dmg", "critical damage"],
   },
   {
     key: "magicAmp",
@@ -191,6 +191,7 @@ const elements = {
   ocrImage: document.querySelector("#ocr-image"),
   ocrDropZone: document.querySelector("#ocr-drop-zone"),
   ocrPreview: document.querySelector("#ocr-preview"),
+  ocrMode: document.querySelector("#ocr-mode"),
   ocrText: document.querySelector("#ocr-text"),
   pasteOcrImage: document.querySelector("#paste-ocr-image"),
   runOcr: document.querySelector("#run-ocr"),
@@ -301,10 +302,17 @@ function bindStaticEvents() {
     renderOcrReport(parseOcrAttributes(state.ocr.text));
   });
 
+  elements.ocrMode.addEventListener("change", () => {
+    state.ocr.mode = elements.ocrMode.value;
+    saveState();
+    setOcrStatus(`Modo ${getOcrModeLabel(state.ocr.mode)} selecionado. Clique em Ler imagem para testar.`);
+  });
+
   elements.pasteOcrImage.addEventListener("click", pasteOcrImageFromClipboard);
   elements.runOcr.addEventListener("click", runOcrRecognition);
   elements.applyOcr.addEventListener("click", applyOcrToCandidate);
   elements.clearOcr.addEventListener("click", clearOcr);
+  elements.ocrStatus.addEventListener("click", applyIgnoredOcrLine);
 
   elements.ocrDropZone.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -464,6 +472,7 @@ function syncFormValues() {
   elements.candidateName.value = state.candidateName || "";
   elements.realDifference.value = state.realDifference || "";
   elements.candidateSort.value = state.candidateSort;
+  elements.ocrMode.value = state.ocr.mode;
   elements.ocrText.value = state.ocr.text || "";
 
   Object.entries(state.market).forEach(([key, value]) => {
@@ -670,8 +679,11 @@ async function runOcrRecognition() {
 
   try {
     await loadTesseract();
-    setOcrStatus("Lendo imagem...");
-    const result = await window.Tesseract.recognize(ocrImageFile, "por+eng", {
+    const ocrInput = await prepareOcrImage(ocrImageFile, state.ocr.mode);
+    setOcrStatus(`Lendo imagem no modo ${getOcrModeLabel(state.ocr.mode)}...`);
+    const result = await window.Tesseract.recognize(ocrInput, "por+eng", {
+      preserve_interword_spaces: "1",
+      tessedit_pageseg_mode: "6",
       logger: (message) => {
         if (message.status && typeof message.progress === "number") {
           setOcrStatus(`${message.status}: ${formatNumber(message.progress * 100, 0)}%`);
@@ -687,6 +699,86 @@ async function runOcrRecognition() {
     setOcrStatus(`Nao foi possivel ler a imagem: ${error.message}`);
   } finally {
     elements.runOcr.disabled = false;
+  }
+}
+
+async function prepareOcrImage(file, mode) {
+  if (mode === "original") {
+    return file;
+  }
+
+  const image = await loadImageElement(file);
+  const scale = 3;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  canvas.width = image.naturalWidth * scale;
+  canvas.height = image.naturalHeight * scale;
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  if (mode === "scale") {
+    return canvas;
+  }
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+  if (mode === "threshold") {
+    applyThresholdPreprocess(imageData);
+  } else {
+    applyContrastPreprocess(imageData);
+  }
+
+  context.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+function loadImageElement(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Nao foi possivel preparar a imagem para OCR."));
+    };
+    image.src = url;
+  });
+}
+
+function applyContrastPreprocess(imageData) {
+  const { data } = imageData;
+
+  for (let index = 0; index < data.length; index += 4) {
+    const value = Math.max(data[index], data[index + 1], data[index + 2]);
+    const adjusted = clamp((value - 90) * 2.2 + 128, 0, 255);
+
+    data[index] = adjusted;
+    data[index + 1] = adjusted;
+    data[index + 2] = adjusted;
+  }
+}
+
+function applyThresholdPreprocess(imageData) {
+  const { data } = imageData;
+
+  for (let index = 0; index < data.length; index += 4) {
+    const red = data[index];
+    const green = data[index + 1];
+    const blue = data[index + 2];
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const saturation = max - min;
+    const isLikelyText = max > 145 || (saturation > 45 && max > 90);
+    const output = isLikelyText ? 0 : 255;
+
+    data[index] = output;
+    data[index + 1] = output;
+    data[index + 2] = output;
   }
 }
 
@@ -807,7 +899,11 @@ function parseOcrAttributes(text) {
       const value = attribute ? extractOcrValue(line) : null;
 
       if (!attribute || value === null) {
-        report.ignored.push(line);
+        report.ignored.push({
+          line,
+          suggestedKey: attribute?.key || guessOcrAttribute(normalizedLine)?.key || "",
+          suggestedValue: value ?? extractOcrValue(line) ?? "",
+        });
         return;
       }
 
@@ -828,7 +924,26 @@ function findOcrAttribute(normalizedLine) {
     return null;
   }
 
-  return ocrAttributePatterns.find((attribute) => attribute.labels.some((label) => normalizedLine.includes(label))) || null;
+  return ocrAttributePatterns.find((attribute) => attribute.labels.some((label) => normalizedLine.includes(label))) || guessOcrAttribute(normalizedLine);
+}
+
+function guessOcrAttribute(normalizedLine) {
+  const compactLine = normalizedLine.replace(/[^a-z0-9%+.,-]/g, "");
+  const hasCriticalText = normalizedLine.includes("critic") || compactLine.includes("critic");
+
+  if (hasCriticalText && /\b(dano|danos|damage|dmg)\b/.test(normalizedLine)) {
+    return getOcrPatternByKey("criticalDamage");
+  }
+
+  if (hasCriticalText && /\b(ta|taxa|texa|rate|critica)\b/.test(normalizedLine)) {
+    return getOcrPatternByKey("criticalRate");
+  }
+
+  return null;
+}
+
+function getOcrPatternByKey(key) {
+  return ocrAttributePatterns.find((attribute) => attribute.key === key) || null;
 }
 
 function extractOcrValue(line) {
@@ -895,7 +1010,7 @@ function renderOcrReport(report, message = "") {
     return;
   }
 
-  if (report.matches.length === 0) {
+  if (report.matches.length === 0 && report.ignored.length === 0) {
     setOcrStatus(message || "Nenhum atributo reconhecido. Voce pode corrigir o texto manualmente e tentar aplicar de novo.");
     return;
   }
@@ -903,15 +1018,69 @@ function renderOcrReport(report, message = "") {
   const totals = Object.entries(report.attributes)
     .map(([key, value]) => `<span class="ocr-match">${escapeHtml(getAttributeLabel(key))}: ${formatNumber(value, 2)}</span>`)
     .join("");
-  const ignoredText = report.ignored.length > 0 ? `<small>${report.ignored.length} linhas ignoradas.</small>` : "";
+  const ignoredText = report.ignored.length > 0 ? renderIgnoredOcrLines(report.ignored) : "";
+  const summary = report.matches.length > 0 ? `${report.matches.length} linhas reconhecidas.` : "Nenhuma linha reconhecida automaticamente.";
 
   elements.ocrStatus.innerHTML = `
     <div class="ocr-report">
-      <strong>${message || `${report.matches.length} linhas reconhecidas.`}</strong>
+      <strong>${message || summary}</strong>
       <div class="ocr-report-list">${totals}</div>
       ${ignoredText}
     </div>
   `;
+}
+
+function renderIgnoredOcrLines(ignoredLines) {
+  return `
+    <div class="ocr-ignored">
+      <strong>${ignoredLines.length} linhas ignoradas. Corrija manualmente se necessario:</strong>
+      ${ignoredLines
+        .map((ignoredLine, index) => `
+          <div class="ocr-ignored-row" data-ignored-index="${index}">
+            <code>${escapeHtml(ignoredLine.line)}</code>
+            <select data-ignored-attribute>
+              <option value="">Atributo...</option>
+              ${renderAttributeOptions(ignoredLine.suggestedKey)}
+            </select>
+            <input data-ignored-value type="number" step="0.1" placeholder="Valor" value="${escapeHtml(ignoredLine.suggestedValue)}" />
+            <button class="secondary-button table-button" type="button" data-apply-ignored-line>Aplicar</button>
+          </div>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
+function renderAttributeOptions(selectedKey) {
+  return attributes
+    .map((attribute) => `<option value="${attribute.key}" ${attribute.key === selectedKey ? "selected" : ""}>${attribute.label}</option>`)
+    .join("");
+}
+
+function applyIgnoredOcrLine(event) {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  const button = event.target.closest("[data-apply-ignored-line]");
+
+  if (!button) {
+    return;
+  }
+
+  const row = button.closest("[data-ignored-index]");
+  const attributeKey = row.querySelector("[data-ignored-attribute]").value;
+  const value = toFlexibleNumber(row.querySelector("[data-ignored-value]").value);
+
+  if (!attributeKey || value === null) {
+    setOcrStatus("Escolha um atributo e informe um valor para aplicar a linha ignorada.");
+    return;
+  }
+
+  state.candidate[attributeKey] = String(value);
+  syncFormValues();
+  persistAndRender();
+  renderOcrReport(parseOcrAttributes(state.ocr.text), `${getAttributeLabel(attributeKey)} aplicado manualmente.`);
 }
 
 function setOcrStatus(message) {
@@ -1121,7 +1290,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
-    ocr: { text: "" },
+    ocr: { text: "", mode: "contrast" },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -1203,12 +1372,27 @@ function normalizeOcrText(value) {
     .trim();
 }
 
+function getOcrModeLabel(mode) {
+  const labels = {
+    original: "Original",
+    scale: "Ampliado",
+    contrast: "Contraste",
+    threshold: "Preto e branco",
+  };
+
+  return labels[mode] || labels.contrast;
+}
+
 function getAttributeLabel(key) {
   return attributes.find((attribute) => attribute.key === key)?.label || key;
 }
 
 function roundNumber(value, digits) {
   return Number(value.toFixed(digits));
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function formatSigned(value) {

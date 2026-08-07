@@ -583,6 +583,13 @@ td {
   gap: 0.7rem;
 }
 
+.ocr-mode-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 0.7rem;
+  align-items: end;
+}
+
 .ocr-actions {
   align-items: center;
 }
@@ -621,6 +628,30 @@ td {
   font-weight: 800;
 }
 
+.ocr-ignored {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+}
+
+.ocr-ignored-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 160px 96px auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ocr-ignored-row code {
+  overflow: hidden;
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 0.6rem;
+  padding: 0.55rem;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.22);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .hero,
   .two-columns,
@@ -644,6 +675,8 @@ td {
   .price-grid,
   .cost-summary,
   .candidate-controls,
+  .ocr-mode-row,
+  .ocr-ignored-row,
   .ocr-grid {
     grid-template-columns: 1fr;
   }
