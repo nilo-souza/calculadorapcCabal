@@ -18,6 +18,14 @@ const attributes = [
     defaultWeight: 0,
   },
   {
+    key: "attackPercent",
+    label: "Ataque %",
+    unit: "%",
+    hint: "Calculado sobre Ataque mágico/Todos os ataques neste app de Mago.",
+    defaultWeight: 34.5,
+    percentOf: "magicAttack",
+  },
+  {
     key: "criticalRate",
     label: "Taxa crítica",
     unit: "%",
@@ -60,20 +68,6 @@ const attributes = [
     defaultWeight: 6.5,
   },
   {
-    key: "evasion",
-    label: "Evasão",
-    unit: "pontos",
-    hint: "Defense Rate na calculadora base.",
-    defaultWeight: 2.4,
-  },
-  {
-    key: "defense",
-    label: "Defesa",
-    unit: "pontos",
-    hint: "Útil caso a arma tenha defesa adicional.",
-    defaultWeight: 21,
-  },
-  {
     key: "penetration",
     label: "Penetração",
     unit: "pontos",
@@ -81,11 +75,151 @@ const attributes = [
     defaultWeight: 71,
   },
   {
+    key: "addDamage",
+    label: "Dano adicional",
+    unit: "pontos",
+    hint: "Add Damage na calculadora base.",
+    defaultWeight: 35,
+  },
+  {
+    key: "ignoreEvasion",
+    label: "Ignorar evasão",
+    unit: "pontos",
+    hint: "Ignore Evasion; pode aparecer como Ignorar Bloqueio.",
+    defaultWeight: 4.5,
+  },
+  {
+    key: "finalDamageIncrease",
+    label: "Aumento dano final",
+    unit: "%",
+    hint: "Final DMG Increase.",
+    defaultWeight: 1604,
+  },
+  {
+    key: "ignoreDamageReduction",
+    label: "Ignorar redução de dano",
+    unit: "pontos",
+    hint: "Ignore DMG Reduce.",
+    defaultWeight: 16.8,
+  },
+  {
+    key: "ignoreResistCriticalRate",
+    label: "Ign. res. taxa crítica",
+    unit: "%",
+    hint: "Ignore Resist Crit. Rate.",
+    defaultWeight: 574,
+  },
+  {
+    key: "ignoreResistCriticalDamage",
+    label: "Ign. res. dano crítico",
+    unit: "%",
+    hint: "Ignore Resist Crit. DMG.",
+    defaultWeight: 142.5,
+  },
+  {
+    key: "ignoreResistSkillAmp",
+    label: "Ign. res. amp.",
+    unit: "%",
+    hint: "Ignore Resist Skill Amp.",
+    defaultWeight: 267,
+  },
+  {
+    key: "normalDamageUp",
+    label: "Aumento dano normal",
+    unit: "%",
+    hint: "Normal DMG Up.",
+    defaultWeight: 85,
+  },
+  {
+    key: "cancelIgnorePenetration",
+    label: "Cancelar ignorar perfuração",
+    unit: "pontos",
+    hint: "Cancel Ignore Penetration.",
+    defaultWeight: 47.8,
+  },
+  {
+    key: "hp",
+    label: "HP",
+    unit: "pontos",
+    hint: "HP na calculadora base.",
+    defaultWeight: 5,
+  },
+  {
+    key: "defense",
+    label: "Defesa",
+    unit: "pontos",
+    hint: "Defense na calculadora base.",
+    defaultWeight: 21,
+  },
+  {
+    key: "defenseRate",
+    label: "Bloqueio",
+    unit: "pontos",
+    hint: "Defense Rate na calculadora base.",
+    defaultWeight: 2.4,
+  },
+  {
+    key: "evasion",
+    label: "Evasão",
+    unit: "pontos",
+    hint: "Evasion na calculadora base.",
+    defaultWeight: 5.3,
+  },
+  {
     key: "damageReduction",
     label: "Redução de dano",
     unit: "pontos",
     hint: "DMG Reduce.",
     defaultWeight: 19.5,
+  },
+  {
+    key: "resistCriticalRate",
+    label: "Res. taxa crítica",
+    unit: "%",
+    hint: "Resist Crit. Rate.",
+    defaultWeight: 636,
+  },
+  {
+    key: "resistCriticalDamage",
+    label: "Res. dano crítico",
+    unit: "%",
+    hint: "Resist Crit. DMG.",
+    defaultWeight: 150,
+  },
+  {
+    key: "resistSkillAmp",
+    label: "Res. amp.",
+    unit: "%",
+    hint: "Resist Skill Amp.",
+    defaultWeight: 296.5,
+  },
+  {
+    key: "ignorePenetration",
+    label: "Ignorar perfuração",
+    unit: "pontos",
+    hint: "Ignore Penetration.",
+    defaultWeight: 53.1,
+  },
+  {
+    key: "ignoreAccuracy",
+    label: "Ignorar acerto",
+    unit: "pontos",
+    hint: "Ignore Accuracy.",
+    defaultWeight: 5.3,
+  },
+  {
+    key: "finalDamageDecrease",
+    label: "Redução dano final",
+    unit: "%",
+    hint: "Final DMG Decrease.",
+    defaultWeight: 1451,
+  },
+  {
+    key: "cancelIgnoreDamageReduction",
+    label: "Cancelar ignorar redução",
+    unit: "pontos",
+    hint: "Cancel Ignore DMG Reduce.",
+    defaultWeight: 19.9,
   },
 ];
 
@@ -117,7 +251,35 @@ const defaultMarket = {
 const ocrAttributePatterns = [
   {
     key: "magicAttack",
-    labels: ["ataque magico", "ataques magicos", "todos os ataques", "all attack", "magic attack"],
+    labels: ["ataque magico", "ataquemagico", "ataques magicos", "ataquesmagicos", "todos os ataques", "all attack", "magic attack"],
+  },
+  {
+    key: "attackPercent",
+    labels: ["ataque %", "ataques %", "ataque percentual", "aumentou todos os ataques %", "todos os ataques %", "attack %", "attack percent"],
+  },
+  {
+    key: "ignoreResistCriticalDamage",
+    labels: ["ignorar resistencia a danos criticos", "ignorar resistencia danos criticos", "ign res dano critico", "ignore resist crit dmg", "ignore resist critical damage"],
+  },
+  {
+    key: "ignoreResistCriticalRate",
+    labels: ["ignorar resistencia a taxa", "ignorar resistencia taxa critica", "ign res taxa critica", "ignore resist crit rate", "ignore resist critical rate"],
+  },
+  {
+    key: "ignoreResistSkillAmp",
+    labels: ["ignorar resistencia a tecnica amp", "ignorar resistencia tecnica amp", "ignorar resistencia a todas as tec amp", "ignorar resistencia todas as tec amp", "ignorar resistencia amp", "ign res todas as tec amp", "ign res amp", "ignore resist skill amp", "ignore resist amp"],
+  },
+  {
+    key: "resistCriticalDamage",
+    labels: ["resistencia a danos criticos", "resistencia danos criticos", "res danos criticos", "res dano critico", "resist crit dmg", "resist critical damage"],
+  },
+  {
+    key: "resistCriticalRate",
+    labels: ["resistencia a taxa critica", "resistencia taxa critica", "res taxa critica", "resist crit rate", "resist critical rate"],
+  },
+  {
+    key: "resistSkillAmp",
+    labels: ["resistencia a tecnica amp", "resistencia tecnica amp", "resistencia a todas as tec amp", "resistencia todas as tec amp", "resistencia amp", "res todas as tec amp", "res amp", "resist skill amp", "resist amp"],
   },
   {
     key: "criticalRate",
@@ -140,24 +302,72 @@ const ocrAttributePatterns = [
     labels: ["precisao", "attack rate"],
   },
   {
+    key: "ignoreAccuracy",
+    labels: ["ignorar acerto", "ignore accuracy"],
+  },
+  {
     key: "hitAccuracy",
     labels: ["acerto", "acertos", "taxa de acerto", "accuracy", "hit accuracy", "hit rate"],
   },
   {
-    key: "evasion",
-    labels: ["evasao", "defense rate"],
+    key: "cancelIgnorePenetration",
+    labels: ["cancelar ignorar perfuracao", "cancelar ignorar penetracao", "cancel ignore penetration"],
   },
   {
-    key: "damageReduction",
-    labels: ["reducao de dano", "reducao de danos", "dmg reduce", "damage reduction"],
+    key: "ignorePenetration",
+    labels: ["ignorar perfuracao", "ignorar penetracao", "ignore penetration"],
   },
   {
     key: "penetration",
     labels: ["perfuracao", "penetracao", "penetration"],
   },
   {
+    key: "cancelIgnoreDamageReduction",
+    labels: ["cancelar ignorar reducao de dano", "cancelar ignorar reducao de danos", "desfazer ignorar reducao de dano", "cancel ignore dmg reduce", "cancel ignore damage reduction"],
+  },
+  {
+    key: "ignoreDamageReduction",
+    labels: ["ignorar reducao de dano", "ignorar reducao de danos", "ignore dmg reduce", "ignore damage reduction"],
+  },
+  {
+    key: "damageReduction",
+    labels: ["reducao de dano", "reducao de danos", "dmg reduce", "damage reduction"],
+  },
+  {
+    key: "ignoreEvasion",
+    labels: ["ignorar evasao", "ignorar bloqueio", "ignore evasion", "ignore block"],
+  },
+  {
+    key: "finalDamageIncrease",
+    labels: ["aumento do dano final", "aumentou dano final", "dano final aumentado", "final dmg increase", "final damage increase"],
+  },
+  {
+    key: "finalDamageDecrease",
+    labels: ["reducao do dano final", "dano final reduzido", "final dmg decrease", "final damage decrease"],
+  },
+  {
+    key: "normalDamageUp",
+    labels: ["aumento do dano normal", "aumentou dano normal", "dano normal", "normal dmg up", "normal damage up"],
+  },
+  {
+    key: "addDamage",
+    labels: ["dano adicional", "add damage", "additional damage"],
+  },
+  {
+    key: "defenseRate",
+    labels: ["bloqueio", "defense rate"],
+  },
+  {
+    key: "evasion",
+    labels: ["evasao", "evasion"],
+  },
+  {
     key: "defense",
     labels: ["defesa", "defense"],
+  },
+  {
+    key: "hp",
+    labels: ["hp", "pontos de vida", "health points"],
   },
   {
     key: "attack",
@@ -312,6 +522,11 @@ function bindStaticEvents() {
 
   elements.ocrText.addEventListener("input", () => {
     state.ocr.text = elements.ocrText.value;
+    state.ocr.appliedIgnoredLines = [];
+    state.ocr.manualMatches = [];
+    state.ocr.matchOverrides = {};
+    state.ocr.deletedMatchClusters = [];
+    state.ocr.deletedIgnoredLines = [];
     saveState();
     renderOcrReport(parseOcrAttributes(state.ocr.text));
   });
@@ -328,7 +543,8 @@ function bindStaticEvents() {
   elements.testOcrModes.addEventListener("click", testAllOcrModes);
   elements.applyOcr.addEventListener("click", applyOcrToCandidate);
   elements.clearOcr.addEventListener("click", clearOcr);
-  elements.ocrStatus.addEventListener("click", applyIgnoredOcrLine);
+  elements.ocrStatus.addEventListener("click", handleOcrStatusClick);
+  elements.ocrStatus.addEventListener("change", updateRecognizedOcrLine);
 
   elements.ocrDropZone.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -523,7 +739,7 @@ function getComparisonRows(candidateAttributes) {
     const candidate = toNumber(candidateAttributes[attribute.key]);
     const weight = toNumber(state.weights[attribute.key]);
     const difference = candidate - current;
-    const impact = difference * weight;
+    const impact = calculateAttributeImpact(attribute, current, candidate, weight, candidateAttributes);
 
     return {
       ...attribute,
@@ -534,6 +750,19 @@ function getComparisonRows(candidateAttributes) {
       impact,
     };
   });
+}
+
+function calculateAttributeImpact(attribute, current, candidate, weight, candidateAttributes) {
+  if (!attribute.percentOf) {
+    return (candidate - current) * weight;
+  }
+
+  const currentBase = toNumber(state.current[attribute.percentOf]);
+  const candidateBase = toNumber(candidateAttributes[attribute.percentOf]);
+  const currentImpact = Math.ceil((currentBase * current * weight) / 100);
+  const candidateImpact = Math.ceil((candidateBase * candidate * weight) / 100);
+
+  return candidateImpact - currentImpact;
 }
 
 function renderSummary(total, changedCount) {
@@ -704,6 +933,11 @@ async function runOcrRecognition() {
       }
     });
     state.ocr.text = text;
+    state.ocr.appliedIgnoredLines = [];
+    state.ocr.manualMatches = [];
+    state.ocr.matchOverrides = {};
+    state.ocr.deletedMatchClusters = [];
+    state.ocr.deletedIgnoredLines = [];
     elements.ocrText.value = text;
     saveState();
     renderOcrReport(parseOcrAttributes(text));
@@ -860,6 +1094,11 @@ async function testAllOcrModes() {
     const bestResult = results.sort((first, second) => second.score - first.score)[0];
     state.ocr.mode = bestResult.mode;
     state.ocr.text = bestResult.text;
+    state.ocr.appliedIgnoredLines = [];
+    state.ocr.manualMatches = [];
+    state.ocr.matchOverrides = {};
+    state.ocr.deletedMatchClusters = [];
+    state.ocr.deletedIgnoredLines = [];
     elements.ocrMode.value = bestResult.mode;
     elements.ocrText.value = bestResult.text;
     saveState();
@@ -874,8 +1113,9 @@ async function testAllOcrModes() {
 }
 
 function scoreOcrReport(text, report) {
-  const uniqueAttributes = Object.keys(report.attributes).length;
-  const importantAttributes = ["magicAttack", "criticalRate", "criticalDamage", "magicAmp", "accuracy", "hitAccuracy", "penetration"].filter((key) => key in report.attributes).length;
+  const totals = getOcrAttributeTotals(report.matches);
+  const uniqueAttributes = Object.keys(totals).length;
+  const importantAttributes = attributes.filter((attribute) => attribute.key in totals).length;
 
   return report.matches.length * 15 + uniqueAttributes * 20 + importantAttributes * 12 - report.ignored.length + Math.min(text.length, 500) / 100;
 }
@@ -943,7 +1183,7 @@ function getClipboardImageFile(clipboardData) {
 
 function applyOcrToCandidate() {
   const report = parseOcrAttributes(state.ocr.text);
-  const parsedEntries = Object.entries(report.attributes);
+  const parsedEntries = Object.entries(getOcrAttributeTotals(report.matches));
 
   if (parsedEntries.length === 0) {
     renderOcrReport(report, "Nenhum atributo reconhecido para aplicar na arma nova.");
@@ -961,6 +1201,11 @@ function applyOcrToCandidate() {
 
 function clearOcr() {
   state.ocr.text = "";
+  state.ocr.appliedIgnoredLines = [];
+  state.ocr.manualMatches = [];
+  state.ocr.matchOverrides = {};
+  state.ocr.deletedMatchClusters = [];
+  state.ocr.deletedIgnoredLines = [];
   elements.ocrText.value = "";
   clearOcrImagePreview();
   saveState();
@@ -983,10 +1228,10 @@ function clearOcrImagePreview() {
 
 function parseOcrAttributes(text) {
   const report = {
-    attributes: {},
-    matches: [],
+    matches: getManualOcrMatches().map(applyOcrMatchOverride).filter(Boolean),
     ignored: [],
   };
+  let currentSection = "";
 
   text
     .split(/\r?\n/)
@@ -994,10 +1239,21 @@ function parseOcrAttributes(text) {
     .filter(Boolean)
     .forEach((line) => {
       const normalizedLine = normalizeOcrText(line);
+      const section = getOcrSectionLabel(line, normalizedLine);
+
+      if (section) {
+        currentSection = section;
+        return;
+      }
+
+      if (isOcrLineAppliedManually(normalizedLine) || isIgnoredOcrLineDeleted(normalizedLine)) {
+        return;
+      }
+
       const attribute = findOcrAttribute(normalizedLine);
       const value = attribute ? extractOcrValue(line) : null;
 
-      if (!attribute || value === null) {
+      if (!attribute || value === null || hasMultipleSignedOcrValues(line)) {
         report.ignored.push({
           line,
           suggestedKey: attribute?.key || guessOcrAttribute(normalizedLine)?.key || "",
@@ -1006,24 +1262,257 @@ function parseOcrAttributes(text) {
         return;
       }
 
-      report.attributes[attribute.key] = roundNumber((report.attributes[attribute.key] || 0) + value, 2);
-      report.matches.push({
-        key: attribute.key,
-        label: getAttributeLabel(attribute.key),
-        line,
-        value,
-      });
+      createOcrMatches(attribute, normalizedLine, line, value, currentSection).forEach((match) => addOcrMatch(report.matches, match));
     });
 
+  report.matches = dedupeOcrMatches(report.matches);
   return report;
 }
 
-function findOcrAttribute(normalizedLine) {
-  if (/\b(ignorar|ignore|resistencia|resist|cancelar|limite|maxima|maximo)\b/.test(normalizedLine)) {
+function createOcrMatches(attribute, normalizedLine, line, value, section) {
+  const keys = attribute.key === "magicAttack" && isAllAttackOcrLine(normalizedLine) ? ["magicAttack", "attack"] : [attribute.key];
+
+  return keys.map((key) => ({
+    key,
+    label: getAttributeLabel(key),
+    line,
+    value,
+    section,
+    shared: keys.length > 1,
+  }));
+}
+
+function isAllAttackOcrLine(normalizedLine) {
+  return /\b(aumentou todos os ataques|todos os ataques|all attack)\b/.test(normalizedLine);
+}
+
+function getOcrSectionLabel(line, normalizedLine) {
+  if (/[+＋-]\s*\d/.test(line)) {
+    return "";
+  }
+
+  const bracketMatch = line.match(/\[\s*([^\]]+)\s*\]/);
+
+  if (bracketMatch) {
+    return bracketMatch[1].trim();
+  }
+
+  if (/\b(opcao geral|opcao epica|opcao|aprimoramento extremo|nivel do aprimoramento divino|nivel divino)\b/.test(normalizedLine)) {
+    return line.replace(/[\[\]]/g, "").trim();
+  }
+
+  return "";
+}
+
+function hasMultipleSignedOcrValues(line) {
+  return [...line.matchAll(/[+＋-]\s*[0-9OoIl|ZzSsBbHhDd&]+(?:[.,][0-9OoIl|ZzSsBbHhDd&]+)?/g)].length > 1;
+}
+
+function addOcrMatch(matches, candidate) {
+  const match = applyOcrMatchOverride(candidate);
+
+  if (match) {
+    matches.push(match);
+  }
+}
+
+function applyOcrMatchOverride(match) {
+  const id = createOcrMatchId(match);
+  const override = getOcrMatchOverrides()[id];
+
+  if (override?.deleted || isOcrMatchDeletedByCluster(match)) {
     return null;
   }
 
+  return {
+    ...match,
+    id,
+    value: override?.value ?? match.value,
+  };
+}
+
+function createOcrMatchId(match) {
+  return [match.manual ? "manual" : "auto", match.key, match.section || "", normalizeOcrText(match.line)].join("|");
+}
+
+function getOcrMatchOverrides() {
+  return state.ocr.matchOverrides && typeof state.ocr.matchOverrides === "object" ? state.ocr.matchOverrides : {};
+}
+
+function setOcrMatchOverride(id, patch) {
+  state.ocr.matchOverrides = {
+    ...getOcrMatchOverrides(),
+    [id]: {
+      ...getOcrMatchOverrides()[id],
+      ...patch,
+    },
+  };
+}
+
+function getDeletedOcrMatchClusters() {
+  return Array.isArray(state.ocr.deletedMatchClusters) ? state.ocr.deletedMatchClusters : [];
+}
+
+function deleteOcrMatchCluster(match) {
+  const cluster = {
+    key: match.key,
+    section: match.section || "",
+    signature: getOcrLineSignature(match.line),
+    value: match.value,
+  };
+
+  state.ocr.deletedMatchClusters = [...getDeletedOcrMatchClusters(), cluster];
+}
+
+function isOcrMatchDeletedByCluster(match) {
+  return getDeletedOcrMatchClusters().some((cluster) => {
+    return cluster.key === match.key && cluster.section === (match.section || "") && cluster.signature === getOcrLineSignature(match.line) && areCloseOcrValues(cluster.value, match.value);
+  });
+}
+
+function dedupeOcrMatches(matches) {
+  const grouped = new Map();
+  const output = [];
+
+  matches.forEach((match, index) => {
+    if (match.manual) {
+      output.push({ match, index });
+      return;
+    }
+
+    const key = [match.key, match.section || "", getOcrLineSignature(match.line)].join("|");
+    const group = grouped.get(key) || [];
+    group.push({ match, index });
+    grouped.set(key, group);
+  });
+
+  grouped.forEach((group) => {
+    getOcrValueClusters(group).forEach((cluster) => output.push(chooseBestOcrClusterMatch(cluster)));
+  });
+
+  return output.sort((first, second) => first.index - second.index).map((entry) => entry.match);
+}
+
+function getOcrValueClusters(group) {
+  return group.reduce((clusters, entry) => {
+    const cluster = clusters.find((candidate) => candidate.some((item) => areCloseOcrValues(item.match.value, entry.match.value)));
+
+    if (cluster) {
+      cluster.push(entry);
+    } else {
+      clusters.push([entry]);
+    }
+
+    return clusters;
+  }, []);
+}
+
+function chooseBestOcrClusterMatch(cluster) {
+  const valueCounts = cluster.reduce((counts, entry) => {
+    const key = String(roundNumber(entry.match.value, 2));
+    counts.set(key, (counts.get(key) || 0) + 1);
+    return counts;
+  }, new Map());
+
+  return cluster
+    .map((entry) => ({
+      ...entry,
+      valueCount: valueCounts.get(String(roundNumber(entry.match.value, 2))) || 0,
+      lineLength: normalizeOcrText(entry.match.line).length,
+    }))
+    .sort((first, second) => {
+      if (second.valueCount !== first.valueCount) {
+        return second.valueCount - first.valueCount;
+      }
+
+      if (first.lineLength !== second.lineLength) {
+        return first.lineLength - second.lineLength;
+      }
+
+      return first.match.value - second.match.value;
+    })[0];
+}
+
+function getOcrLineSignature(line) {
+  const normalizedLine = normalizeOcrText(line)
+    .replace(/\bataquemagico\b/g, "ataque magico")
+    .replace(/\btodososataques\b/g, "todos os ataques")
+    .replace(/\d+(?:[.,]\d+)?/g, "#")
+    .replace(/[^a-z#+%-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const valuePrefix = normalizedLine.match(/^(.*?[+-]\s*#%?)/);
+
+  return valuePrefix ? valuePrefix[1].trim() : normalizedLine;
+}
+
+function areCloseOcrValues(firstValue, secondValue) {
+  const tolerance = Math.max(1, Math.abs(firstValue) * 0.1, Math.abs(secondValue) * 0.1);
+  return Math.abs(firstValue - secondValue) <= tolerance;
+}
+
+function isOcrLineAppliedManually(normalizedLine) {
+  return state.ocr.appliedIgnoredLines?.includes(normalizedLine);
+}
+
+function addManualOcrMatch(line, key, value) {
+  const normalizedLine = normalizeOcrText(line);
+
+  if (!normalizedLine) {
+    return;
+  }
+
+  state.ocr.appliedIgnoredLines = [...new Set([...(state.ocr.appliedIgnoredLines || []), normalizedLine])];
+  state.ocr.manualMatches = [
+    ...getManualOcrMatches().filter((match) => normalizeOcrText(match.line) !== normalizedLine),
+    {
+      key,
+      label: getAttributeLabel(key),
+      line,
+      value,
+      manual: true,
+    },
+  ];
+}
+
+function getManualOcrMatches() {
+  return Array.isArray(state.ocr.manualMatches) ? state.ocr.manualMatches : [];
+}
+
+function isIgnoredOcrLineDeleted(normalizedLine) {
+  return state.ocr.deletedIgnoredLines?.includes(normalizedLine);
+}
+
+function deleteIgnoredOcrLine(line) {
+  const normalizedLine = normalizeOcrText(line);
+
+  if (!normalizedLine) {
+    return;
+  }
+
+  state.ocr.deletedIgnoredLines = [...new Set([...(state.ocr.deletedIgnoredLines || []), normalizedLine])];
+}
+
+function findOcrAttribute(normalizedLine) {
+  if (/\b(limite|maxima|maximo)\b/.test(normalizedLine)) {
+    return null;
+  }
+
+  const derivedAttribute = guessDerivedOcrAttribute(normalizedLine);
+
+  if (derivedAttribute) {
+    return derivedAttribute;
+  }
+
   return ocrAttributePatterns.find((attribute) => attribute.labels.some((label) => normalizedLine.includes(label))) || guessOcrAttribute(normalizedLine);
+}
+
+function guessDerivedOcrAttribute(normalizedLine) {
+  if (normalizedLine.includes("%") && /\b(aumentou todos os ataques|todos os ataques)\b|attack\s*%/.test(normalizedLine)) {
+    return getOcrPatternByKey("attackPercent");
+  }
+
+  return null;
 }
 
 function guessOcrAttribute(normalizedLine) {
@@ -1046,7 +1535,7 @@ function getOcrPatternByKey(key) {
 }
 
 function extractOcrValue(line) {
-  const signedMatch = line.match(/[+＋-]\s*(\d+(?:[.,]\d+)?)/);
+  const signedMatch = line.match(/[+＋-]\s*([0-9OoIl|ZzSsBbHhDd&]+(?:[.,][0-9OoIl|ZzSsBbHhDd&]+)?)/);
 
   if (signedMatch) {
     const value = parseOcrNumber(signedMatch[1]);
@@ -1075,7 +1564,17 @@ function extractOcrValue(line) {
 }
 
 function parseOcrNumber(value) {
-  return Number.parseFloat(value.replace(",", "."));
+  return Number.parseFloat(correctOcrNumberText(value).replace(",", "."));
+}
+
+function correctOcrNumberText(value) {
+  return String(value)
+    .replace(/&/g, "8")
+    .replace(/[OoDd]/g, "0")
+    .replace(/[Il|]/g, "1")
+    .replace(/[Zz]/g, "2")
+    .replace(/[Ss]/g, "5")
+    .replace(/[BbHh]/g, "8");
 }
 
 function extractOcrPercentFallback(line) {
@@ -1114,19 +1613,76 @@ function renderOcrReport(report, message = "") {
     return;
   }
 
-  const totals = Object.entries(report.attributes)
-    .map(([key, value]) => `<span class="ocr-match">${escapeHtml(getAttributeLabel(key))}: ${formatNumber(value, 2)}</span>`)
-    .join("");
+  const recognizedText = report.matches.length > 0 ? renderRecognizedOcrLines(report.matches) : "";
   const ignoredText = report.ignored.length > 0 ? renderIgnoredOcrLines(report.ignored) : "";
   const summary = report.matches.length > 0 ? `${report.matches.length} linhas reconhecidas.` : "Nenhuma linha reconhecida automaticamente.";
 
   elements.ocrStatus.innerHTML = `
     <div class="ocr-report">
       <strong>${message || summary}</strong>
-      <div class="ocr-report-list">${totals}</div>
+      ${recognizedText}
       ${ignoredText}
     </div>
   `;
+}
+
+function renderRecognizedOcrLines(matches) {
+  const groups = getOcrAttributeGroups(matches);
+
+  return `
+    <div class="ocr-recognized">
+      <strong>Linhas reconhecidas:</strong>
+      ${groups
+        .map((group) => `
+          <div class="ocr-recognized-group">
+            <div class="ocr-recognized-group-title">
+              <strong>${escapeHtml(group.label)}</strong>
+              <span>${group.count} ${group.count === 1 ? "linha" : "linhas"}</span>
+            </div>
+            ${group.matches
+              .map((match) => `
+                <div class="ocr-recognized-row">
+                  <code>${escapeHtml(match.line)}</code>
+                  <input data-ocr-match-value="${escapeHtml(match.id)}" type="number" step="0.1" value="${escapeHtml(match.value)}" aria-label="Valor reconhecido para ${escapeHtml(group.label)}" />
+                  <button class="secondary-button table-button icon-button" type="button" data-delete-ocr-match="${escapeHtml(match.id)}" title="Excluir" aria-label="Excluir linha reconhecida">&#128465;</button>
+                  ${match.manual || match.shared ? `<small>${[match.manual ? "Manual" : "", match.shared ? "Todos os ataques" : ""].filter(Boolean).join(" / ")}</small>` : ""}
+                </div>
+              `)
+              .join("")}
+            <div class="ocr-recognized-total">
+              <span>Total ${escapeHtml(group.label)}</span>
+              <strong>${formatNumber(group.total, 2)}</strong>
+            </div>
+          </div>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
+function getOcrAttributeGroups(matches) {
+  const grouped = new Map();
+
+  matches.forEach((match) => {
+    const group = grouped.get(match.key) || {
+      key: match.key,
+      label: getAttributeLabel(match.key),
+      total: 0,
+      count: 0,
+      matches: [],
+    };
+
+    group.total = roundNumber(group.total + match.value, 2);
+    group.count += 1;
+    group.matches.push(match);
+    grouped.set(match.key, group);
+  });
+
+  return [...grouped.values()];
+}
+
+function getOcrAttributeTotals(matches) {
+  return Object.fromEntries(getOcrAttributeGroups(matches).map((group) => [group.key, group.total]));
 }
 
 function renderIgnoredOcrLines(ignoredLines) {
@@ -1143,6 +1699,7 @@ function renderIgnoredOcrLines(ignoredLines) {
             </select>
             <input data-ignored-value type="number" step="0.1" placeholder="Valor" value="${escapeHtml(ignoredLine.suggestedValue)}" />
             <button class="secondary-button table-button" type="button" data-apply-ignored-line>Aplicar</button>
+            <button class="secondary-button table-button icon-button" type="button" data-delete-ignored-line title="Excluir" aria-label="Excluir linha ignorada">&#128465;</button>
           </div>
         `)
         .join("")}
@@ -1154,6 +1711,92 @@ function renderAttributeOptions(selectedKey) {
   return attributes
     .map((attribute) => `<option value="${attribute.key}" ${attribute.key === selectedKey ? "selected" : ""}>${attribute.label}</option>`)
     .join("");
+}
+
+function handleOcrStatusClick(event) {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  const deleteButton = event.target.closest("[data-delete-ocr-match]");
+
+  if (deleteButton) {
+    if (!confirmOcrLineDeletion()) {
+      return;
+    }
+
+    const report = parseOcrAttributes(state.ocr.text);
+    const match = report.matches.find((candidate) => candidate.id === deleteButton.dataset.deleteOcrMatch);
+    const matchesToDelete = match ? getLinkedOcrMatches(report.matches, match) : [];
+
+    matchesToDelete.forEach((candidate) => {
+      deleteOcrMatchCluster(candidate);
+      setOcrMatchOverride(candidate.id, { deleted: true });
+    });
+
+    saveState();
+    renderOcrReport(parseOcrAttributes(state.ocr.text), "Linha reconhecida removida do OCR.");
+    return;
+  }
+
+  const deleteIgnoredButton = event.target.closest("[data-delete-ignored-line]");
+
+  if (deleteIgnoredButton) {
+    if (!confirmOcrLineDeletion()) {
+      return;
+    }
+
+    const row = deleteIgnoredButton.closest("[data-ignored-index]");
+    const line = row.querySelector("code").textContent;
+    deleteIgnoredOcrLine(line);
+    saveState();
+    renderOcrReport(parseOcrAttributes(state.ocr.text), "Linha ignorada removida do OCR.");
+    return;
+  }
+
+  applyIgnoredOcrLine(event);
+}
+
+function confirmOcrLineDeletion() {
+  return window.confirm("Esta linha será excluída do relatório OCR. Deseja continuar?");
+}
+
+function updateRecognizedOcrLine(event) {
+  if (!(event.target instanceof Element) || !event.target.matches("[data-ocr-match-value]")) {
+    return;
+  }
+
+  const value = toFlexibleNumber(event.target.value);
+
+  if (value === null) {
+    setOcrStatus("Informe um valor valido para ajustar a linha reconhecida.");
+    return;
+  }
+
+  const report = parseOcrAttributes(state.ocr.text);
+  const match = report.matches.find((candidate) => candidate.id === event.target.dataset.ocrMatchValue);
+  const matchesToUpdate = match ? getLinkedOcrMatches(report.matches, match) : [];
+
+  if (matchesToUpdate.length === 0) {
+    setOcrMatchOverride(event.target.dataset.ocrMatchValue, { value });
+  } else {
+    matchesToUpdate.forEach((candidate) => setOcrMatchOverride(candidate.id, { value }));
+  }
+
+  saveState();
+  renderOcrReport(parseOcrAttributes(state.ocr.text), "Valor reconhecido ajustado.");
+}
+
+function getLinkedOcrMatches(matches, match) {
+  if (!match.shared) {
+    return [match];
+  }
+
+  const line = normalizeOcrText(match.line);
+
+  return matches.filter((candidate) => {
+    return candidate.shared && candidate.section === match.section && normalizeOcrText(candidate.line) === line && areCloseOcrValues(candidate.value, match.value);
+  });
 }
 
 function applyIgnoredOcrLine(event) {
@@ -1168,6 +1811,7 @@ function applyIgnoredOcrLine(event) {
   }
 
   const row = button.closest("[data-ignored-index]");
+  const line = row.querySelector("code").textContent;
   const attributeKey = row.querySelector("[data-ignored-attribute]").value;
   const value = toFlexibleNumber(row.querySelector("[data-ignored-value]").value);
 
@@ -1177,6 +1821,7 @@ function applyIgnoredOcrLine(event) {
   }
 
   state.candidate[attributeKey] = String(value);
+  addManualOcrMatch(line, attributeKey, value);
   syncFormValues();
   persistAndRender();
   renderOcrReport(parseOcrAttributes(state.ocr.text), `${getAttributeLabel(attributeKey)} aplicado manualmente.`);
@@ -1389,7 +2034,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
-    ocr: { text: "", mode: "threshold" },
+    ocr: { text: "", mode: "threshold", appliedIgnoredLines: [], manualMatches: [], matchOverrides: {}, deletedMatchClusters: [], deletedIgnoredLines: [] },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -1414,6 +2059,11 @@ function loadState() {
       ocr: {
         text: storedState.ocr?.text || defaultState.ocr.text,
         mode: storedState.ocr?.mode || defaultState.ocr.mode,
+        appliedIgnoredLines: Array.isArray(storedState.ocr?.appliedIgnoredLines) ? storedState.ocr.appliedIgnoredLines : [],
+        manualMatches: Array.isArray(storedState.ocr?.manualMatches) ? storedState.ocr.manualMatches : [],
+        matchOverrides: storedState.ocr?.matchOverrides && typeof storedState.ocr.matchOverrides === "object" ? storedState.ocr.matchOverrides : {},
+        deletedMatchClusters: Array.isArray(storedState.ocr?.deletedMatchClusters) ? storedState.ocr.deletedMatchClusters : [],
+        deletedIgnoredLines: Array.isArray(storedState.ocr?.deletedIgnoredLines) ? storedState.ocr.deletedIgnoredLines : [],
       },
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };

@@ -630,20 +630,67 @@ td {
   margin-bottom: 0.6rem;
 }
 
-.ocr-report-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-bottom: 0.5rem;
+.ocr-recognized {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
 }
 
-.ocr-match {
-  border-radius: 999px;
-  padding: 0.25rem 0.55rem;
-  color: var(--accent);
-  background: rgba(119, 230, 198, 0.12);
+.ocr-recognized-group {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid rgba(154, 175, 207, 0.14);
+  border-radius: 0.8rem;
+  padding: 0.65rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.ocr-recognized-group-title,
+.ocr-recognized-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.ocr-recognized-group-title span {
+  color: var(--muted);
   font-size: 0.82rem;
+}
+
+.ocr-recognized-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 110px 42px auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ocr-recognized-row code {
+  overflow: hidden;
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 0.6rem;
+  padding: 0.55rem;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.22);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ocr-recognized-row small {
+  color: var(--accent);
   font-weight: 800;
+  margin-bottom: 0;
+}
+
+.ocr-recognized-total {
+  border-top: 1px solid rgba(154, 175, 207, 0.14);
+  padding-top: 0.45rem;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.ocr-recognized-total strong {
+  margin-bottom: 0;
 }
 
 .ocr-ignored {
@@ -654,9 +701,18 @@ td {
 
 .ocr-ignored-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 160px 96px auto;
+  grid-template-columns: minmax(180px, 1fr) 160px 96px auto 42px;
   gap: 0.5rem;
   align-items: center;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  min-width: 2.4rem;
+  padding-inline: 0;
+  font-size: 1rem;
 }
 
 .ocr-ignored-row code {
@@ -696,6 +752,10 @@ td {
   .ocr-mode-row,
   .ocr-ignored-row,
   .ocr-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ocr-recognized-row {
     grid-template-columns: 1fr;
   }
 }

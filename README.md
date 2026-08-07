@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.6.2`.
+Versão atual: `v0.7`.
 
 ## Como usar
 
@@ -34,6 +34,8 @@ Diferença estimada = soma((atributo da arma nova - atributo da arma atual) * pe
 ```
 
 Os pesos iniciais foram baseados na calculadora pública do Mr. Wormy para Combat Power. Para Mago, a própria calculadora orienta usar Ataque Mágico como "Todos os Ataques" e Amp. Mágica como "Todas as Téc. Amp.".
+
+A partir da `v0.7`, o catálogo inclui os principais atributos ofensivos e defensivos da calculadora. `Ataque %` é tratado como atributo derivado, calculado sobre o valor informado em `Ataque mágico`/`Todos os ataques`.
 
 Todos os pesos podem ser editados na tela. Os dados ficam salvos no navegador via `localStorage`.
 
@@ -84,6 +86,8 @@ Fluxo recomendado:
 6. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
 7. Clique em "Aplicar na arma nova".
 
+Quando uma linha ignorada é aplicada manualmente, ela deixa de aparecer na lista de ignoradas daquele OCR.
+
 O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma. A biblioteca é carregada somente quando você clica em "Ler imagem" ou "Testar modos".
 
 ## Validação atual
@@ -91,6 +95,21 @@ O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carr
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.7
+
+- Ampliado o catálogo de atributos com pesos da calculadora do Mr. Wormy.
+- Adicionados atributos ofensivos como `Dano adicional`, `Ignorar evasão`, `Aumento dano final`, `Ignorar redução de dano`, `Ignorar resistências`, `Aumento dano normal` e `Cancelar ignorar perfuração`.
+- Adicionados atributos defensivos como `HP`, `Bloqueio`, `Resistências`, `Ignorar perfuração`, `Ignorar acerto`, `Redução dano final` e `Cancelar ignorar redução`.
+- `Ataque %` agora é calculado como atributo derivado sobre `Ataque mágico`/`Todos os ataques`.
+- O OCR reconhece novos rótulos desses atributos e permite aplicar linhas ignoradas sem mantê-las visíveis depois da correção manual.
+- O relatório OCR agrupa as linhas reconhecidas por atributo e mostra o total logo abaixo de cada grupo.
+- Corrigido reconhecimento de `AtaqueMágico` sem espaço e filtragem de duplicatas próximas geradas pelo OCR.
+- Melhorada a filtragem de duplicatas considerando seções do tooltip e leituras próximas, como `Precisão + 1148` e `Precisão + 1149`.
+- Linhas reconhecidas agora podem ter o valor editado ou ser excluídas antes de aplicar na arma nova.
+- `Aumentou todos os ataques +N` agora entra tanto em `Ataque mágico` quanto em `Ataque físico`; o peso de `Ataque físico` continua `0` por padrão para Mago.
+- Corrigida leitura de valores como `&0`, que o OCR pode gerar no lugar de `80`.
+- Linhas reconhecidas e ignoradas podem ser excluídas com ícone de lixeira e confirmação antes da remoção.
 
 ### v0.6.2
 
