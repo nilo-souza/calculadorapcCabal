@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.5.4`.
+Versão atual: `v0.6`.
 
 ## Como usar
 
@@ -78,11 +78,12 @@ Fluxo recomendado:
 
 1. Tire um print ou recorte do tooltip do item.
 2. Selecione, arraste ou cole a imagem na área de OCR.
-3. Use o modo `Preto e branco`, que é o padrão recomendado para tooltips do Cabal.
-4. Clique em "Ler imagem".
-5. Revise o texto reconhecido.
-6. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
-7. Clique em "Aplicar na arma nova".
+3. Ajuste o recorte para isolar o tooltip, se o print tiver inventário ou fundo demais.
+4. Use o modo `Preto e branco`, que é o padrão recomendado para tooltips do Cabal.
+5. Clique em "Ler imagem" ou "Testar modos".
+6. Revise o texto reconhecido.
+7. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
+8. Clique em "Aplicar na arma nova".
 
 O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma. A biblioteca é carregada somente quando você clica em "Ler imagem".
 
@@ -91,6 +92,14 @@ O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carr
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.6
+
+- Adicionado recorte manual do tooltip por porcentagem.
+- Adicionada prévia da imagem processada que será enviada ao OCR.
+- Adicionado botão "Testar modos" para comparar `Preto e branco`, `Contraste`, `Ampliado` e `Original`.
+- O melhor modo é escolhido automaticamente com base nos atributos reconhecidos.
+- O recorte e modo OCR ficam salvos no navegador.
 
 ### v0.5.4
 

@@ -163,6 +163,7 @@ let state = loadState();
 let latestEstimate = 0;
 let ocrImageFile = null;
 let ocrPreviewUrl = null;
+let ocrPreviewRenderId = 0;
 
 const elements = {
   currentName: document.querySelector("#current-name"),
@@ -191,13 +192,16 @@ const elements = {
   ocrImage: document.querySelector("#ocr-image"),
   ocrDropZone: document.querySelector("#ocr-drop-zone"),
   ocrPreview: document.querySelector("#ocr-preview"),
+  ocrProcessedPreview: document.querySelector("#ocr-processed-preview"),
   ocrMode: document.querySelector("#ocr-mode"),
   ocrText: document.querySelector("#ocr-text"),
   pasteOcrImage: document.querySelector("#paste-ocr-image"),
   runOcr: document.querySelector("#run-ocr"),
+  testOcrModes: document.querySelector("#test-ocr-modes"),
   applyOcr: document.querySelector("#apply-ocr"),
   clearOcr: document.querySelector("#clear-ocr"),
   ocrStatus: document.querySelector("#ocr-status"),
+  resetOcrCrop: document.querySelector("#reset-ocr-crop"),
 };
 
 renderFields();
@@ -306,13 +310,32 @@ function bindStaticEvents() {
     state.ocr.mode = elements.ocrMode.value;
     saveState();
     setOcrStatus(`Modo ${getOcrModeLabel(state.ocr.mode)} selecionado. Clique em Ler imagem para testar.`);
+    updateProcessedPreview();
+  });
+
+  document.querySelectorAll("[data-ocr-crop]").forEach((input) => {
+    input.addEventListener("input", () => {
+      state.ocr.crop[input.dataset.ocrCrop] = Number(input.value);
+      normalizeAndSaveOcrCrop();
+      syncOcrCropControls();
+      updateProcessedPreview();
+      saveState();
+    });
   });
 
   elements.pasteOcrImage.addEventListener("click", pasteOcrImageFromClipboard);
   elements.runOcr.addEventListener("click", runOcrRecognition);
+  elements.testOcrModes.addEventListener("click", testAllOcrModes);
   elements.applyOcr.addEventListener("click", applyOcrToCandidate);
   elements.clearOcr.addEventListener("click", clearOcr);
   elements.ocrStatus.addEventListener("click", applyIgnoredOcrLine);
+  elements.resetOcrCrop.addEventListener("click", () => {
+    state.ocr.crop = createDefaultOcrCrop();
+    syncOcrCropControls();
+    updateProcessedPreview();
+    saveState();
+    setOcrStatus("Recorte redefinido para imagem inteira.");
+  });
 
   elements.ocrDropZone.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -474,6 +497,7 @@ function syncFormValues() {
   elements.candidateSort.value = state.candidateSort;
   elements.ocrMode.value = state.ocr.mode;
   elements.ocrText.value = state.ocr.text || "";
+  syncOcrCropControls();
 
   Object.entries(state.market).forEach(([key, value]) => {
     setInputValue(`[data-market="${key}"]`, value);
@@ -665,6 +689,7 @@ function loadOcrImage(file) {
   ocrPreviewUrl = URL.createObjectURL(file);
   elements.ocrPreview.src = ocrPreviewUrl;
   elements.ocrPreview.hidden = false;
+  updateProcessedPreview();
   setOcrStatus("Imagem carregada. Clique em Ler imagem para executar o OCR.");
 }
 
@@ -681,16 +706,11 @@ async function runOcrRecognition() {
     await loadTesseract();
     const ocrInput = await prepareOcrImage(ocrImageFile, state.ocr.mode);
     setOcrStatus(`Lendo imagem no modo ${getOcrModeLabel(state.ocr.mode)}...`);
-    const result = await window.Tesseract.recognize(ocrInput, "por+eng", {
-      preserve_interword_spaces: "1",
-      tessedit_pageseg_mode: "6",
-      logger: (message) => {
-        if (message.status && typeof message.progress === "number") {
-          setOcrStatus(`${message.status}: ${formatNumber(message.progress * 100, 0)}%`);
-        }
-      },
+    const text = await recognizeOcrInput(ocrInput, (message) => {
+      if (message.status && typeof message.progress === "number") {
+        setOcrStatus(`${message.status}: ${formatNumber(message.progress * 100, 0)}%`);
+      }
     });
-    const text = result.data.text.trim();
     state.ocr.text = text;
     elements.ocrText.value = text;
     saveState();
@@ -702,20 +722,35 @@ async function runOcrRecognition() {
   }
 }
 
-async function prepareOcrImage(file, mode) {
-  if (mode === "original") {
-    return file;
-  }
+async function recognizeOcrInput(ocrInput, logger) {
+  const result = await window.Tesseract.recognize(ocrInput, "por+eng", {
+    preserve_interword_spaces: "1",
+    tessedit_pageseg_mode: "6",
+    logger,
+  });
 
+  return result.data.text.trim();
+}
+
+async function prepareOcrImage(file, mode) {
   const image = await loadImageElement(file);
-  const scale = 3;
+  const crop = getNormalizedOcrCrop();
+  const sourceX = Math.round((image.naturalWidth * crop.left) / 100);
+  const sourceY = Math.round((image.naturalHeight * crop.top) / 100);
+  const sourceWidth = Math.max(1, Math.round((image.naturalWidth * crop.width) / 100));
+  const sourceHeight = Math.max(1, Math.round((image.naturalHeight * crop.height) / 100));
+  const scale = mode === "original" ? 1 : 3;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", { willReadFrequently: true });
 
-  canvas.width = image.naturalWidth * scale;
-  canvas.height = image.naturalHeight * scale;
+  canvas.width = sourceWidth * scale;
+  canvas.height = sourceHeight * scale;
   context.imageSmoothingEnabled = false;
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+
+  if (mode === "original") {
+    return canvas;
+  }
 
   if (mode === "scale") {
     return canvas;
@@ -780,6 +815,123 @@ function applyThresholdPreprocess(imageData) {
     data[index + 1] = output;
     data[index + 2] = output;
   }
+}
+
+async function updateProcessedPreview() {
+  const renderId = ++ocrPreviewRenderId;
+
+  if (!ocrImageFile) {
+    elements.ocrProcessedPreview.hidden = true;
+    return;
+  }
+
+  try {
+    const canvas = await prepareOcrImage(ocrImageFile, state.ocr.mode);
+
+    if (renderId !== ocrPreviewRenderId) {
+      return;
+    }
+
+    elements.ocrProcessedPreview.width = canvas.width;
+    elements.ocrProcessedPreview.height = canvas.height;
+    elements.ocrProcessedPreview.getContext("2d").drawImage(canvas, 0, 0);
+    elements.ocrProcessedPreview.hidden = false;
+  } catch (error) {
+    setOcrStatus(`Nao foi possivel atualizar a previa do OCR: ${error.message}`);
+  }
+}
+
+async function testAllOcrModes() {
+  if (!ocrImageFile) {
+    setOcrStatus("Selecione, arraste ou cole uma imagem antes de testar os modos.");
+    return;
+  }
+
+  const modes = ["threshold", "contrast", "scale", "original"];
+  elements.runOcr.disabled = true;
+  elements.testOcrModes.disabled = true;
+  setOcrStatus("Preparando OCR para testar todos os modos...");
+
+  try {
+    await loadTesseract();
+    const results = [];
+
+    for (const [index, mode] of modes.entries()) {
+      setOcrStatus(`Testando ${getOcrModeLabel(mode)} (${index + 1}/${modes.length})...`);
+      const input = await prepareOcrImage(ocrImageFile, mode);
+      const text = await recognizeOcrInput(input);
+      const report = parseOcrAttributes(text);
+
+      results.push({
+        mode,
+        text,
+        report,
+        score: scoreOcrReport(text, report),
+      });
+    }
+
+    const bestResult = results.sort((first, second) => second.score - first.score)[0];
+    state.ocr.mode = bestResult.mode;
+    state.ocr.text = bestResult.text;
+    elements.ocrMode.value = bestResult.mode;
+    elements.ocrText.value = bestResult.text;
+    saveState();
+    updateProcessedPreview();
+    renderOcrReport(bestResult.report, `Melhor modo: ${getOcrModeLabel(bestResult.mode)}.`);
+  } catch (error) {
+    setOcrStatus(`Nao foi possivel testar os modos: ${error.message}`);
+  } finally {
+    elements.runOcr.disabled = false;
+    elements.testOcrModes.disabled = false;
+  }
+}
+
+function scoreOcrReport(text, report) {
+  const uniqueAttributes = Object.keys(report.attributes).length;
+  const importantAttributes = ["magicAttack", "criticalRate", "criticalDamage", "magicAmp", "penetration"].filter((key) => key in report.attributes).length;
+
+  return report.matches.length * 15 + uniqueAttributes * 20 + importantAttributes * 12 - report.ignored.length + Math.min(text.length, 500) / 100;
+}
+
+function createDefaultOcrCrop() {
+  return {
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 100,
+  };
+}
+
+function getNormalizedOcrCrop() {
+  const crop = { ...createDefaultOcrCrop(), ...state.ocr.crop };
+  const left = clamp(Number(crop.left) || 0, 0, 95);
+  const top = clamp(Number(crop.top) || 0, 0, 95);
+  const width = clamp(Number(crop.width) || 100, 5, 100 - left);
+  const height = clamp(Number(crop.height) || 100, 5, 100 - top);
+
+  return { left, top, width, height };
+}
+
+function normalizeAndSaveOcrCrop() {
+  state.ocr.crop = getNormalizedOcrCrop();
+}
+
+function syncOcrCropControls() {
+  const crop = getNormalizedOcrCrop();
+  state.ocr.crop = crop;
+
+  Object.entries(crop).forEach(([key, value]) => {
+    const input = document.querySelector(`[data-ocr-crop="${key}"]`);
+    const label = document.querySelector(`#ocr-crop-${key}-value`);
+
+    if (input) {
+      input.value = value;
+    }
+
+    if (label) {
+      label.textContent = `${formatNumber(value, 0)}%`;
+    }
+  });
 }
 
 function loadTesseract() {
@@ -880,6 +1032,7 @@ function clearOcrImagePreview() {
 
   elements.ocrPreview.hidden = true;
   elements.ocrPreview.removeAttribute("src");
+  elements.ocrProcessedPreview.hidden = true;
 }
 
 function parseOcrAttributes(text) {
@@ -1290,7 +1443,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
-    ocr: { text: "", mode: "threshold" },
+    ocr: { text: "", mode: "threshold", crop: createDefaultOcrCrop() },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -1312,7 +1465,11 @@ function loadState() {
       market: { ...defaultState.market, ...storedState.market },
       candidateOptions: Array.isArray(storedState.candidateOptions) ? storedState.candidateOptions : defaultState.candidateOptions,
       candidateSort: storedState.candidateSort || defaultState.candidateSort,
-      ocr: { ...defaultState.ocr, ...storedState.ocr },
+      ocr: {
+        ...defaultState.ocr,
+        ...storedState.ocr,
+        crop: { ...defaultState.ocr.crop, ...storedState.ocr?.crop },
+      },
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };
   } catch {

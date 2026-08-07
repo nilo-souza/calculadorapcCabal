@@ -578,6 +578,43 @@ td {
   background: rgba(0, 0, 0, 0.25);
 }
 
+.ocr-crop-panel,
+.ocr-processed-preview-wrap {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 0.9rem;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ocr-crop-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.ocr-crop-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ocr-crop-grid label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+#ocr-processed-preview {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 0.85rem;
+  background: #ffffff;
+}
+
 .ocr-workspace {
   display: grid;
   gap: 0.7rem;
