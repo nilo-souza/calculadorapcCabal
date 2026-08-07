@@ -130,6 +130,10 @@ const elements = {
   validationSummary: document.querySelector("#validation-summary"),
   validationTable: document.querySelector("#validation-table"),
   costSummary: document.querySelector("#cost-summary"),
+  saveCandidateOption: document.querySelector("#save-candidate-option"),
+  candidateSort: document.querySelector("#candidate-sort"),
+  clearCandidates: document.querySelector("#clear-candidates"),
+  candidateTable: document.querySelector("#candidate-table"),
 };
 
 renderFields();
@@ -239,6 +243,74 @@ function bindStaticEvents() {
     persistAndRender();
   });
 
+  elements.saveCandidateOption.addEventListener("click", () => {
+    if (!hasCandidateInput()) {
+      showCostMessage("Preencha pelo menos o nome ou um atributo da arma nova antes de adicionar à lista.");
+      return;
+    }
+
+    state.candidateOptions.unshift({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: state.candidateName.trim() || `Arma candidata ${state.candidateOptions.length + 1}`,
+      attributes: { ...state.candidate },
+      market: {
+        candidatePriceValue: state.market.candidatePriceValue,
+        candidatePriceUnit: state.market.candidatePriceUnit,
+        note: state.market.note,
+      },
+      createdAt: new Date().toISOString(),
+    });
+
+    persistAndRender();
+  });
+
+  elements.candidateSort.addEventListener("change", () => {
+    state.candidateSort = elements.candidateSort.value;
+    persistAndRender();
+  });
+
+  elements.clearCandidates.addEventListener("click", () => {
+    state.candidateOptions = [];
+    persistAndRender();
+  });
+
+  elements.candidateTable.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const loadButton = event.target.closest("[data-load-candidate]");
+
+    if (loadButton) {
+      const option = state.candidateOptions.find((candidateOption) => candidateOption.id === loadButton.dataset.loadCandidate);
+
+      if (!option) {
+        return;
+      }
+
+      state.candidateName = option.name;
+      state.candidate = { ...defaultState.candidate, ...option.attributes };
+      state.market = {
+        ...state.market,
+        candidatePriceValue: option.market?.candidatePriceValue || "",
+        candidatePriceUnit: option.market?.candidatePriceUnit || "kk",
+        note: option.market?.note || "",
+      };
+      syncFormValues();
+      persistAndRender();
+      return;
+    }
+
+    const button = event.target.closest("[data-remove-candidate]");
+
+    if (!button) {
+      return;
+    }
+
+    state.candidateOptions = state.candidateOptions.filter((option) => option.id !== button.dataset.removeCandidate);
+    persistAndRender();
+  });
+
   elements.resetWeights.addEventListener("click", () => {
     state.weights = Object.fromEntries(attributes.map((attribute) => [attribute.key, attribute.defaultWeight]));
     syncFormValues();
@@ -267,6 +339,7 @@ function syncFormValues() {
   elements.currentName.value = state.currentName || "";
   elements.candidateName.value = state.candidateName || "";
   elements.realDifference.value = state.realDifference || "";
+  elements.candidateSort.value = state.candidateSort;
 
   Object.entries(state.market).forEach(([key, value]) => {
     setInputValue(`[data-market="${key}"]`, value);
@@ -280,9 +353,24 @@ function syncFormValues() {
 }
 
 function calculateAndRender() {
-  const rows = attributes.map((attribute) => {
+  const rows = getComparisonRows(state.candidate);
+
+  const total = rows.reduce((sum, row) => sum + row.impact, 0);
+  const changedRows = rows.filter((row) => row.difference !== 0 || row.impact !== 0);
+  latestEstimate = total;
+
+  renderSummary(total, changedRows.length);
+  renderImpactTable(rows);
+  renderCalibration(total);
+  renderCostBenefit(total);
+  renderCandidateOptions();
+  renderValidationHistory();
+}
+
+function getComparisonRows(candidateAttributes) {
+  return attributes.map((attribute) => {
     const current = toNumber(state.current[attribute.key]);
-    const candidate = toNumber(state.candidate[attribute.key]);
+    const candidate = toNumber(candidateAttributes[attribute.key]);
     const weight = toNumber(state.weights[attribute.key]);
     const difference = candidate - current;
     const impact = difference * weight;
@@ -296,16 +384,6 @@ function calculateAndRender() {
       impact,
     };
   });
-
-  const total = rows.reduce((sum, row) => sum + row.impact, 0);
-  const changedRows = rows.filter((row) => row.difference !== 0 || row.impact !== 0);
-  latestEstimate = total;
-
-  renderSummary(total, changedRows.length);
-  renderImpactTable(rows);
-  renderCalibration(total);
-  renderCostBenefit(total);
-  renderValidationHistory();
 }
 
 function renderSummary(total, changedCount) {
@@ -437,6 +515,102 @@ function renderCostBenefit(total) {
   `;
 }
 
+function renderCandidateOptions() {
+  if (state.candidateOptions.length === 0) {
+    elements.candidateTable.innerHTML = `<tr><td colspan="9">Nenhuma arma candidata salva.</td></tr>`;
+    return;
+  }
+
+  const sortedOptions = state.candidateOptions.map(enrichCandidateOption).sort(compareCandidateOptions);
+
+  elements.candidateTable.innerHTML = sortedOptions
+    .map((option, index) => {
+      const pcClass = option.total > 0 ? "impact-positive" : option.total < 0 ? "impact-negative" : "";
+      const rowClass = index === 0 && option.total > 0 ? "best-candidate" : "";
+
+      return `
+        <tr class="${rowClass}">
+          <td>${index + 1}</td>
+          <td>${escapeHtml(option.name)}</td>
+          <td class="${pcClass}">${formatSigned(option.total)}</td>
+          <td>${option.candidatePriceBi === null ? "Sem preço" : formatAlzes(option.candidatePriceBi)}</td>
+          <td>${option.investmentBi === null ? "Indisponível" : formatSignedAlzes(option.investmentBi)}</td>
+          <td>${option.efficiency === null ? "Indisponível" : formatNumber(option.efficiency)}</td>
+          <td><span class="rating ${option.evaluation.tone}">${option.evaluation.label}</span></td>
+          <td>${escapeHtml(option.note || "-")}</td>
+          <td>
+            <div class="table-actions">
+              <button class="secondary-button table-button" type="button" data-load-candidate="${option.id}">Carregar</button>
+              <button class="secondary-button table-button" type="button" data-remove-candidate="${option.id}">Remover</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function enrichCandidateOption(option) {
+  const rows = getComparisonRows(option.attributes || {});
+  const total = rows.reduce((sum, row) => sum + row.impact, 0);
+  const currentPriceBi = priceToBi(state.market.currentPriceValue, state.market.currentPriceUnit);
+  const candidatePriceBi = priceToBi(option.market?.candidatePriceValue, option.market?.candidatePriceUnit || "kk");
+  const hasCurrentPrice = currentPriceBi !== null && currentPriceBi > 0;
+  const investmentBi = candidatePriceBi === null || candidatePriceBi <= 0 ? null : hasCurrentPrice ? candidatePriceBi - currentPriceBi : candidatePriceBi;
+  const efficiency = investmentBi !== null && investmentBi > 0 ? total / investmentBi : null;
+  const evaluation = investmentBi === null ? getMissingPriceEvaluation(total) : getCostEvaluation(total, investmentBi, efficiency);
+
+  return {
+    ...option,
+    total,
+    candidatePriceBi,
+    investmentBi,
+    efficiency,
+    evaluation,
+    note: option.market?.note || "",
+  };
+}
+
+function compareCandidateOptions(first, second) {
+  if (state.candidateSort === "pc") {
+    return second.total - first.total;
+  }
+
+  if (state.candidateSort === "price") {
+    return nullableSortValue(first.candidatePriceBi) - nullableSortValue(second.candidatePriceBi);
+  }
+
+  return getValueSortScore(second) - getValueSortScore(first);
+}
+
+function getValueSortScore(option) {
+  if (option.total > 0 && option.investmentBi !== null && option.investmentBi < 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return option.efficiency ?? Number.NEGATIVE_INFINITY;
+}
+
+function nullableSortValue(value) {
+  return value === null ? Number.POSITIVE_INFINITY : value;
+}
+
+function getMissingPriceEvaluation(total) {
+  if (total <= 0) {
+    return {
+      label: "Não compensa pelo PC",
+      detail: "A troca reduz ou não altera os Pontos de Combate.",
+      tone: "negative",
+    };
+  }
+
+  return {
+    label: "Sem preço",
+    detail: "Informe o preço para avaliar custo-benefício.",
+    tone: "neutral",
+  };
+}
+
 function renderCostStat(label, value, hint) {
   return `
     <div class="cost-stat">
@@ -520,6 +694,14 @@ function buildValidationLabel() {
   return `${currentName} -> ${candidateName}`;
 }
 
+function hasCandidateInput() {
+  return Boolean(state.candidateName.trim()) || attributes.some((attribute) => state.candidate[attribute.key] !== "");
+}
+
+function showCostMessage(message) {
+  elements.costSummary.innerHTML = `<div class="cost-empty">${message}</div>`;
+}
+
 function persistAndRender() {
   saveState();
   calculateAndRender();
@@ -534,6 +716,8 @@ function createDefaultState(validationHistory) {
     weights: Object.fromEntries(attributes.map((attribute) => [attribute.key, attribute.defaultWeight])),
     realDifference: "",
     market: { ...defaultMarket },
+    candidateOptions: [],
+    candidateSort: "value",
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -553,6 +737,8 @@ function loadState() {
       candidate: { ...defaultState.candidate, ...storedState.candidate },
       weights: { ...defaultState.weights, ...storedState.weights },
       market: { ...defaultState.market, ...storedState.market },
+      candidateOptions: Array.isArray(storedState.candidateOptions) ? storedState.candidateOptions : defaultState.candidateOptions,
+      candidateSort: storedState.candidateSort || defaultState.candidateSort,
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };
   } catch {

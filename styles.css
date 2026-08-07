@@ -220,6 +220,7 @@ h2 {
 }
 
 .cost-card,
+.candidates-card,
 .validation-card {
   margin-top: 1.25rem;
 }
@@ -405,6 +406,10 @@ td {
   gap: 0.8rem;
 }
 
+.cost-actions {
+  margin-top: 1rem;
+}
+
 .cost-stat,
 .cost-evaluation,
 .cost-empty {
@@ -457,6 +462,63 @@ td {
   font-size: 0.82rem;
 }
 
+.candidates-header {
+  align-items: end;
+}
+
+.candidate-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.candidate-sort-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.candidate-table {
+  min-width: 1120px;
+}
+
+.best-candidate {
+  background: rgba(119, 230, 198, 0.07);
+}
+
+.rating {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: var(--accent);
+  background: rgba(119, 230, 198, 0.12);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.rating.negative {
+  color: var(--danger);
+  background: rgba(255, 122, 144, 0.12);
+}
+
+.rating.neutral {
+  color: var(--warning);
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.table-button {
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
 @media (max-width: 900px) {
   .hero,
   .two-columns,
@@ -478,7 +540,8 @@ td {
   }
 
   .price-grid,
-  .cost-summary {
+  .cost-summary,
+  .candidate-controls {
     grid-template-columns: 1fr;
   }
 }

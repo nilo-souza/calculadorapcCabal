@@ -10,7 +10,7 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">v0.3 local</p>
+          <p class="eyebrow">v0.4 local</p>
           <h1>Comparador de armas para Mago</h1>
           <p class="hero-text">
             Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
@@ -142,6 +142,48 @@
         </div>
 
         <div class="cost-summary" id="cost-summary"></div>
+        <div class="button-row cost-actions">
+          <button type="button" id="save-candidate-option">Adicionar arma à lista</button>
+        </div>
+      </section>
+
+      <section class="card candidates-card">
+        <div class="card-header compact candidates-header">
+          <div>
+            <p class="label">Ranking</p>
+            <h2>Armas candidatas salvas</h2>
+          </div>
+          <div class="candidate-controls">
+            <div class="candidate-sort-field">
+              <label for="candidate-sort">Ordenar por</label>
+              <select id="candidate-sort">
+                <option value="value">Melhor custo-benefício</option>
+                <option value="pc">Maior ganho de PC</option>
+                <option value="price">Menor preço</option>
+              </select>
+            </div>
+            <button class="secondary-button" type="button" id="clear-candidates">Limpar lista</button>
+          </div>
+        </div>
+        <p class="hint">As opções salvas são sempre recalculadas contra a arma atual e os pesos configurados no momento.</p>
+        <div class="table-wrap">
+          <table class="candidate-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Arma</th>
+                <th>Ganho PC</th>
+                <th>Preço</th>
+                <th>Custo líquido</th>
+                <th>PC/bi</th>
+                <th>Avaliação</th>
+                <th>Obs.</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="candidate-table"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="grid two-columns bottom-grid">
