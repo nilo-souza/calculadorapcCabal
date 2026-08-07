@@ -114,7 +114,7 @@ const ocrAttributePatterns = [
   },
   {
     key: "criticalRate",
-    labels: ["taxa critica", "crit rate", "critical rate"],
+    labels: ["taxa critica", "taxa critic", "texa critica", "texa critic", "crit rate", "critical rate"],
   },
   {
     key: "criticalDamage",
@@ -845,6 +845,12 @@ function extractOcrValue(line) {
     return parseOcrNumber(percentMatch[1]);
   }
 
+  const percentFallback = extractOcrPercentFallback(line);
+
+  if (percentFallback !== null) {
+    return percentFallback;
+  }
+
   const allNumbers = [...line.matchAll(/\d+(?:[.,]\d+)?/g)].map((match) => parseOcrNumber(match[0]));
 
   if (allNumbers.length === 1 && /\b(slot|encaixe|opcao|opção)\b/i.test(line)) {
@@ -856,6 +862,31 @@ function extractOcrValue(line) {
 
 function parseOcrNumber(value) {
   return Number.parseFloat(value.replace(",", "."));
+}
+
+function extractOcrPercentFallback(line) {
+  const percentIndex = line.indexOf("%");
+
+  if (percentIndex === -1) {
+    return null;
+  }
+
+  const tailBeforePercent = line.slice(Math.max(0, percentIndex - 8), percentIndex);
+  const correctedTail = tailBeforePercent
+    .replace(/[Oo]/g, "0")
+    .replace(/[Il|]/g, "1")
+    .replace(/[Zz]/g, "2")
+    .replace(/[Ss]/g, "5")
+    .replace(/[BbHh]/g, "8")
+    .replace(/[^0-9.,]/g, "");
+
+  const correctedMatch = correctedTail.match(/\d+(?:[.,]\d+)?/g);
+
+  if (!correctedMatch) {
+    return null;
+  }
+
+  return parseOcrNumber(correctedMatch.at(-1));
 }
 
 function renderOcrReport(report, message = "") {

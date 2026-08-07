@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.5.1`.
+Versão atual: `v0.5.2`.
 
 ## Como usar
 
@@ -89,6 +89,11 @@ O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carr
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.5.2
+
+- Melhorado reconhecimento de `Taxa Crítica` quando o OCR lê `Taxa` como `Texa`.
+- Adicionado fallback para recuperar percentuais quando o OCR confunde `8` com `H` ou `B` antes do `%`.
 
 ### v0.5.1
 
