@@ -10,7 +10,7 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">v0.4 local</p>
+          <p class="eyebrow">v0.5 local</p>
           <h1>Comparador de armas para Mago</h1>
           <p class="hero-text">
             Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
@@ -63,6 +63,36 @@
           </div>
           <div class="attribute-list" id="candidate-fields"></div>
         </form>
+      </section>
+
+      <section class="card ocr-card">
+        <div class="card-header compact">
+          <div>
+            <p class="label">OCR</p>
+            <h2>Ler print do item</h2>
+          </div>
+        </div>
+        <p class="hint">Selecione, arraste ou cole uma imagem do tooltip do item. Revise o texto lido antes de aplicar os atributos na arma nova.</p>
+
+        <div class="ocr-grid">
+          <div class="ocr-drop-zone" id="ocr-drop-zone">
+            <input id="ocr-image" type="file" accept="image/*" />
+            <p>Arraste o print aqui ou use o seletor acima.</p>
+            <small>Tambem funciona colando uma imagem da area de transferencia.</small>
+            <img id="ocr-preview" alt="Previa do print selecionado" hidden />
+          </div>
+
+          <div class="ocr-workspace">
+            <label for="ocr-text">Texto lido pelo OCR</label>
+            <textarea id="ocr-text" placeholder="O texto reconhecido no print aparecera aqui. Voce pode editar antes de aplicar."></textarea>
+            <div class="button-row ocr-actions">
+              <button type="button" id="run-ocr">Ler imagem</button>
+              <button type="button" id="apply-ocr">Aplicar na arma nova</button>
+              <button class="secondary-button" type="button" id="clear-ocr">Limpar OCR</button>
+            </div>
+            <div class="ocr-status" id="ocr-status">Nenhuma imagem selecionada.</div>
+          </div>
+        </div>
       </section>
 
       <section class="grid details-grid">
@@ -241,6 +271,7 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

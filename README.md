@@ -2,13 +2,13 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.4.1`.
+Versão atual: `v0.5`.
 
 ## Como usar
 
 1. Abra `index.html` no navegador.
 2. Preencha os atributos da arma atual.
-3. Preencha os atributos da arma nova.
+3. Preencha os atributos da arma nova manualmente ou use o OCR para ler um print do item.
 4. Confira a diferença estimada de Pontos de Combate.
 5. Informe o preço da arma nova em `kk` ou `bi` para calcular o custo-benefício.
 6. Opcionalmente, informe o preço da arma atual para calcular o custo líquido da troca.
@@ -70,11 +70,33 @@ O ranking pode ser ordenado por:
 
 As armas salvas são recalculadas automaticamente quando a arma atual ou os pesos são alterados.
 
+## OCR por print
+
+A versão `v0.5` adiciona leitura de print do tooltip do item usando OCR no navegador.
+
+Fluxo recomendado:
+
+1. Tire um print ou recorte do tooltip do item.
+2. Selecione, arraste ou cole a imagem na área de OCR.
+3. Clique em "Ler imagem".
+4. Revise o texto reconhecido.
+5. Clique em "Aplicar na arma nova".
+
+O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma.
+
 ## Validação atual
 
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.5
+
+- Adicionado upload, arrastar/soltar e colar imagem para OCR.
+- Adicionada leitura de print do tooltip com `Tesseract.js`.
+- Adicionado parser de atributos reconhecidos no texto do OCR.
+- Adicionado preenchimento automático da arma nova a partir do OCR.
+- Adicionado relatório de atributos reconhecidos e linhas ignoradas.
 
 ### v0.4.1
 

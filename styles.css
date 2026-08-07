@@ -30,7 +30,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -56,7 +57,8 @@ button:hover {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 0.8rem;
@@ -67,9 +69,22 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16);
+}
+
+textarea {
+  min-height: 13rem;
+  resize: vertical;
+}
+
+button:disabled {
+  cursor: wait;
+  filter: grayscale(0.4);
+  opacity: 0.72;
+  transform: none;
 }
 
 select {
@@ -221,6 +236,7 @@ h2 {
 
 .cost-card,
 .candidates-card,
+.ocr-card,
 .validation-card {
   margin-top: 1.25rem;
 }
@@ -519,6 +535,86 @@ td {
   gap: 0.45rem;
 }
 
+.ocr-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ocr-drop-zone {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(6, 12, 27, 0.45);
+}
+
+.ocr-drop-zone.dragging {
+  border-color: var(--accent-strong);
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.ocr-drop-zone p,
+.ocr-drop-zone small {
+  margin: 0;
+  color: var(--muted);
+}
+
+#ocr-preview {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border: 1px solid rgba(154, 175, 207, 0.16);
+  border-radius: 0.85rem;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ocr-workspace {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ocr-actions {
+  align-items: center;
+}
+
+.ocr-status {
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+  padding: 0.9rem;
+  color: var(--muted);
+  background: rgba(6, 12, 27, 0.45);
+}
+
+.ocr-report strong,
+.ocr-report small {
+  display: block;
+}
+
+.ocr-report strong {
+  color: var(--text);
+  margin-bottom: 0.6rem;
+}
+
+.ocr-report-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.ocr-match {
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: var(--accent);
+  background: rgba(119, 230, 198, 0.12);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 @media (max-width: 900px) {
   .hero,
   .two-columns,
@@ -541,7 +637,8 @@ td {
 
   .price-grid,
   .cost-summary,
-  .candidate-controls {
+  .candidate-controls,
+  .ocr-grid {
     grid-template-columns: 1fr;
   }
 }

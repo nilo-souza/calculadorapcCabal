@@ -105,10 +105,62 @@ const defaultMarket = {
   note: "",
 };
 
+const ocrAttributePatterns = [
+  {
+    key: "magicAttack",
+    labels: ["ataque magico", "ataques magicos", "todos os ataques", "all attack", "magic attack"],
+  },
+  {
+    key: "criticalRate",
+    labels: ["taxa critica", "crit rate", "critical rate"],
+  },
+  {
+    key: "criticalDamage",
+    labels: ["dano critico", "danos criticos", "crit dmg", "critical damage"],
+  },
+  {
+    key: "magicAmp",
+    labels: ["amp magica", "amplificacao magica", "tec magica amp", "tecnica magica amp", "todas as tec amp", "all skill amp"],
+  },
+  {
+    key: "swordAmp",
+    labels: ["amp espada", "tec espada amp", "tecnica espada amp", "sword amp"],
+  },
+  {
+    key: "accuracy",
+    labels: ["precisao", "attack rate"],
+  },
+  {
+    key: "evasion",
+    labels: ["evasao", "defense rate"],
+  },
+  {
+    key: "damageReduction",
+    labels: ["reducao de dano", "reducao de danos", "dmg reduce", "damage reduction"],
+  },
+  {
+    key: "penetration",
+    labels: ["perfuracao", "penetracao", "penetration"],
+  },
+  {
+    key: "defense",
+    labels: ["defesa", "defense"],
+  },
+  {
+    key: "attack",
+    labels: ["ataque fisico", "ataque", "attack"],
+  },
+].map((attribute) => ({
+  ...attribute,
+  labels: attribute.labels.map(normalizeOcrText),
+}));
+
 const defaultState = createDefaultState(seedValidationHistory);
 
 let state = loadState();
 let latestEstimate = 0;
+let ocrImageFile = null;
+let ocrPreviewUrl = null;
 
 const elements = {
   currentName: document.querySelector("#current-name"),
@@ -134,12 +186,21 @@ const elements = {
   candidateSort: document.querySelector("#candidate-sort"),
   clearCandidates: document.querySelector("#clear-candidates"),
   candidateTable: document.querySelector("#candidate-table"),
+  ocrImage: document.querySelector("#ocr-image"),
+  ocrDropZone: document.querySelector("#ocr-drop-zone"),
+  ocrPreview: document.querySelector("#ocr-preview"),
+  ocrText: document.querySelector("#ocr-text"),
+  runOcr: document.querySelector("#run-ocr"),
+  applyOcr: document.querySelector("#apply-ocr"),
+  clearOcr: document.querySelector("#clear-ocr"),
+  ocrStatus: document.querySelector("#ocr-status"),
 };
 
 renderFields();
 bindStaticEvents();
 syncFormValues();
 calculateAndRender();
+renderOcrReport(parseOcrAttributes(state.ocr.text));
 
 function renderFields() {
   elements.currentFields.innerHTML = attributes.map((attribute) => renderAttributeInput(attribute, "current")).join("");
@@ -219,6 +280,58 @@ function bindStaticEvents() {
   elements.realDifference.addEventListener("input", () => {
     state.realDifference = elements.realDifference.value;
     persistAndRender();
+  });
+
+  elements.ocrImage.addEventListener("change", () => {
+    const [file] = elements.ocrImage.files;
+
+    if (file) {
+      loadOcrImage(file);
+    }
+  });
+
+  elements.ocrText.addEventListener("input", () => {
+    state.ocr.text = elements.ocrText.value;
+    saveState();
+    renderOcrReport(parseOcrAttributes(state.ocr.text));
+  });
+
+  elements.runOcr.addEventListener("click", runOcrRecognition);
+  elements.applyOcr.addEventListener("click", applyOcrToCandidate);
+  elements.clearOcr.addEventListener("click", clearOcr);
+
+  elements.ocrDropZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    elements.ocrDropZone.classList.add("dragging");
+  });
+
+  elements.ocrDropZone.addEventListener("dragleave", () => {
+    elements.ocrDropZone.classList.remove("dragging");
+  });
+
+  elements.ocrDropZone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    elements.ocrDropZone.classList.remove("dragging");
+
+    const [file] = event.dataTransfer.files;
+
+    if (file) {
+      loadOcrImage(file);
+    }
+  });
+
+  document.addEventListener("paste", (event) => {
+    const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
+
+    if (!imageItem) {
+      return;
+    }
+
+    const file = imageItem.getAsFile();
+
+    if (file) {
+      loadOcrImage(file);
+    }
   });
 
   elements.saveValidation.addEventListener("click", () => {
@@ -330,6 +443,7 @@ function bindStaticEvents() {
 
   elements.clearAll.addEventListener("click", () => {
     state = createDefaultState([]);
+    clearOcrImagePreview();
     syncFormValues();
     persistAndRender();
   });
@@ -340,6 +454,7 @@ function syncFormValues() {
   elements.candidateName.value = state.candidateName || "";
   elements.realDifference.value = state.realDifference || "";
   elements.candidateSort.value = state.candidateSort;
+  elements.ocrText.value = state.ocr.text || "";
 
   Object.entries(state.market).forEach(([key, value]) => {
     setInputValue(`[data-market="${key}"]`, value);
@@ -514,6 +629,194 @@ function renderCostBenefit(total) {
       <small>${evaluation.detail}</small>
     </div>
   `;
+}
+
+function loadOcrImage(file) {
+  if (!file.type.startsWith("image/")) {
+    setOcrStatus("Selecione um arquivo de imagem valido.");
+    return;
+  }
+
+  ocrImageFile = file;
+
+  if (ocrPreviewUrl) {
+    URL.revokeObjectURL(ocrPreviewUrl);
+  }
+
+  ocrPreviewUrl = URL.createObjectURL(file);
+  elements.ocrPreview.src = ocrPreviewUrl;
+  elements.ocrPreview.hidden = false;
+  setOcrStatus("Imagem carregada. Clique em Ler imagem para executar o OCR.");
+}
+
+async function runOcrRecognition() {
+  if (!ocrImageFile) {
+    setOcrStatus("Selecione, arraste ou cole uma imagem antes de executar o OCR.");
+    return;
+  }
+
+  if (!window.Tesseract) {
+    setOcrStatus("Biblioteca OCR nao carregada. Verifique a conexao com a internet e recarregue a pagina.");
+    return;
+  }
+
+  elements.runOcr.disabled = true;
+  setOcrStatus("Lendo imagem... o primeiro uso pode demorar enquanto o OCR e baixado.");
+
+  try {
+    const result = await window.Tesseract.recognize(ocrImageFile, "por+eng", {
+      logger: (message) => {
+        if (message.status && typeof message.progress === "number") {
+          setOcrStatus(`${message.status}: ${formatNumber(message.progress * 100, 0)}%`);
+        }
+      },
+    });
+    const text = result.data.text.trim();
+    state.ocr.text = text;
+    elements.ocrText.value = text;
+    saveState();
+    renderOcrReport(parseOcrAttributes(text));
+  } catch (error) {
+    setOcrStatus(`Nao foi possivel ler a imagem: ${error.message}`);
+  } finally {
+    elements.runOcr.disabled = false;
+  }
+}
+
+function applyOcrToCandidate() {
+  const report = parseOcrAttributes(state.ocr.text);
+  const parsedEntries = Object.entries(report.attributes);
+
+  if (parsedEntries.length === 0) {
+    renderOcrReport(report, "Nenhum atributo reconhecido para aplicar na arma nova.");
+    return;
+  }
+
+  parsedEntries.forEach(([key, value]) => {
+    state.candidate[key] = String(value);
+  });
+
+  syncFormValues();
+  persistAndRender();
+  renderOcrReport(report, `${parsedEntries.length} atributos aplicados na arma nova.`);
+}
+
+function clearOcr() {
+  state.ocr.text = "";
+  elements.ocrText.value = "";
+  clearOcrImagePreview();
+  saveState();
+  setOcrStatus("Nenhuma imagem selecionada.");
+}
+
+function clearOcrImagePreview() {
+  elements.ocrImage.value = "";
+  ocrImageFile = null;
+
+  if (ocrPreviewUrl) {
+    URL.revokeObjectURL(ocrPreviewUrl);
+    ocrPreviewUrl = null;
+  }
+
+  elements.ocrPreview.hidden = true;
+  elements.ocrPreview.removeAttribute("src");
+}
+
+function parseOcrAttributes(text) {
+  const report = {
+    attributes: {},
+    matches: [],
+    ignored: [],
+  };
+
+  text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .forEach((line) => {
+      const normalizedLine = normalizeOcrText(line);
+      const attribute = findOcrAttribute(normalizedLine);
+      const value = attribute ? extractOcrValue(line) : null;
+
+      if (!attribute || value === null) {
+        report.ignored.push(line);
+        return;
+      }
+
+      report.attributes[attribute.key] = roundNumber((report.attributes[attribute.key] || 0) + value, 2);
+      report.matches.push({
+        key: attribute.key,
+        label: getAttributeLabel(attribute.key),
+        line,
+        value,
+      });
+    });
+
+  return report;
+}
+
+function findOcrAttribute(normalizedLine) {
+  if (/\b(ignorar|ignore|resistencia|resist|cancelar|limite|maxima|maximo)\b/.test(normalizedLine)) {
+    return null;
+  }
+
+  return ocrAttributePatterns.find((attribute) => attribute.labels.some((label) => normalizedLine.includes(label))) || null;
+}
+
+function extractOcrValue(line) {
+  const signedMatch = line.match(/[+＋-]\s*(\d+(?:[.,]\d+)?)/);
+
+  if (signedMatch) {
+    const value = parseOcrNumber(signedMatch[1]);
+    return signedMatch[0].includes("-") ? -value : value;
+  }
+
+  const percentMatch = line.match(/(\d+(?:[.,]\d+)?)\s*%/);
+
+  if (percentMatch) {
+    return parseOcrNumber(percentMatch[1]);
+  }
+
+  const allNumbers = [...line.matchAll(/\d+(?:[.,]\d+)?/g)].map((match) => parseOcrNumber(match[0]));
+
+  if (allNumbers.length === 1 && /\b(slot|encaixe|opcao|opção)\b/i.test(line)) {
+    return null;
+  }
+
+  return allNumbers.length > 0 ? allNumbers.at(-1) : null;
+}
+
+function parseOcrNumber(value) {
+  return Number.parseFloat(value.replace(",", "."));
+}
+
+function renderOcrReport(report, message = "") {
+  if (!state.ocr.text.trim()) {
+    setOcrStatus("Nenhuma imagem selecionada.");
+    return;
+  }
+
+  if (report.matches.length === 0) {
+    setOcrStatus(message || "Nenhum atributo reconhecido. Voce pode corrigir o texto manualmente e tentar aplicar de novo.");
+    return;
+  }
+
+  const totals = Object.entries(report.attributes)
+    .map(([key, value]) => `<span class="ocr-match">${escapeHtml(getAttributeLabel(key))}: ${formatNumber(value, 2)}</span>`)
+    .join("");
+  const ignoredText = report.ignored.length > 0 ? `<small>${report.ignored.length} linhas ignoradas.</small>` : "";
+
+  elements.ocrStatus.innerHTML = `
+    <div class="ocr-report">
+      <strong>${message || `${report.matches.length} linhas reconhecidas.`}</strong>
+      <div class="ocr-report-list">${totals}</div>
+      ${ignoredText}
+    </div>
+  `;
+}
+
+function setOcrStatus(message) {
+  elements.ocrStatus.textContent = message;
 }
 
 function renderCandidateOptions() {
@@ -719,6 +1022,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
+    ocr: { text: "" },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -740,6 +1044,7 @@ function loadState() {
       market: { ...defaultState.market, ...storedState.market },
       candidateOptions: Array.isArray(storedState.candidateOptions) ? storedState.candidateOptions : defaultState.candidateOptions,
       candidateSort: storedState.candidateSort || defaultState.candidateSort,
+      ocr: { ...defaultState.ocr, ...storedState.ocr },
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };
   } catch {
@@ -787,6 +1092,24 @@ function toFlexibleNumber(value) {
   const number = Number.parseFloat(normalizedValue);
 
   return Number.isFinite(number) ? number : null;
+}
+
+function normalizeOcrText(value) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9%+.,-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getAttributeLabel(key) {
+  return attributes.find((attribute) => attribute.key === key)?.label || key;
+}
+
+function roundNumber(value, digits) {
+  return Number(value.toFixed(digits));
 }
 
 function formatSigned(value) {
