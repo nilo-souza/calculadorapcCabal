@@ -557,6 +557,12 @@ td {
   background: rgba(45, 212, 191, 0.08);
 }
 
+.ocr-drop-zone:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16);
+  outline: none;
+}
+
 .ocr-drop-zone p,
 .ocr-drop-zone small {
   margin: 0;

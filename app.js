@@ -1,4 +1,6 @@
 const STORAGE_KEY = "cabal-weapon-comparator-v1";
+const TESSERACT_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+let tesseractScriptPromise = null;
 
 const attributes = [
   {
@@ -190,6 +192,7 @@ const elements = {
   ocrDropZone: document.querySelector("#ocr-drop-zone"),
   ocrPreview: document.querySelector("#ocr-preview"),
   ocrText: document.querySelector("#ocr-text"),
+  pasteOcrImage: document.querySelector("#paste-ocr-image"),
   runOcr: document.querySelector("#run-ocr"),
   applyOcr: document.querySelector("#apply-ocr"),
   clearOcr: document.querySelector("#clear-ocr"),
@@ -283,10 +286,12 @@ function bindStaticEvents() {
   });
 
   elements.ocrImage.addEventListener("change", () => {
-    const [file] = elements.ocrImage.files;
+    const file = getFirstImageFile(elements.ocrImage.files);
 
     if (file) {
       loadOcrImage(file);
+    } else {
+      setOcrStatus("O arquivo selecionado nao e uma imagem valida.");
     }
   });
 
@@ -296,6 +301,7 @@ function bindStaticEvents() {
     renderOcrReport(parseOcrAttributes(state.ocr.text));
   });
 
+  elements.pasteOcrImage.addEventListener("click", pasteOcrImageFromClipboard);
   elements.runOcr.addEventListener("click", runOcrRecognition);
   elements.applyOcr.addEventListener("click", applyOcrToCandidate);
   elements.clearOcr.addEventListener("click", clearOcr);
@@ -313,26 +319,30 @@ function bindStaticEvents() {
     event.preventDefault();
     elements.ocrDropZone.classList.remove("dragging");
 
-    const [file] = event.dataTransfer.files;
+    const file = getFirstImageFile(event.dataTransfer.files);
 
     if (file) {
       loadOcrImage(file);
+    } else {
+      setOcrStatus("Solte um arquivo de imagem valido.");
     }
   });
 
-  document.addEventListener("paste", (event) => {
-    const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
+  elements.ocrDropZone.addEventListener("paste", handleOcrPaste);
+  document.addEventListener("paste", handleOcrPaste);
+  setOcrStatus("Nenhuma imagem selecionada. Clique na area de OCR e cole com Ctrl+V, ou selecione um arquivo.");
 
-    if (!imageItem) {
+  function handleOcrPaste(event) {
+    const file = getClipboardImageFile(event.clipboardData);
+
+    if (!file) {
       return;
     }
 
-    const file = imageItem.getAsFile();
-
-    if (file) {
-      loadOcrImage(file);
-    }
-  });
+    event.preventDefault();
+    event.stopPropagation();
+    loadOcrImage(file);
+  }
 
   elements.saveValidation.addEventListener("click", () => {
     if (state.realDifference === "") {
@@ -655,15 +665,12 @@ async function runOcrRecognition() {
     return;
   }
 
-  if (!window.Tesseract) {
-    setOcrStatus("Biblioteca OCR nao carregada. Verifique a conexao com a internet e recarregue a pagina.");
-    return;
-  }
-
   elements.runOcr.disabled = true;
-  setOcrStatus("Lendo imagem... o primeiro uso pode demorar enquanto o OCR e baixado.");
+  setOcrStatus("Preparando OCR... o primeiro uso pode demorar enquanto a biblioteca e baixada.");
 
   try {
+    await loadTesseract();
+    setOcrStatus("Lendo imagem...");
     const result = await window.Tesseract.recognize(ocrImageFile, "por+eng", {
       logger: (message) => {
         if (message.status && typeof message.progress === "number") {
@@ -681,6 +688,67 @@ async function runOcrRecognition() {
   } finally {
     elements.runOcr.disabled = false;
   }
+}
+
+function loadTesseract() {
+  if (window.Tesseract) {
+    return Promise.resolve();
+  }
+
+  if (tesseractScriptPromise) {
+    return tesseractScriptPromise;
+  }
+
+  tesseractScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = TESSERACT_SCRIPT_URL;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Nao foi possivel carregar a biblioteca OCR. Verifique sua conexao com a internet."));
+    document.head.append(script);
+  });
+
+  return tesseractScriptPromise;
+}
+
+async function pasteOcrImageFromClipboard() {
+  if (!navigator.clipboard?.read) {
+    setOcrStatus("Este navegador nao permite ler imagem pelo botao. Clique na area de OCR e pressione Ctrl+V.");
+    elements.ocrDropZone.focus();
+    return;
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    const imageType = clipboardItems.flatMap((item) => item.types).find((type) => type.startsWith("image/"));
+
+    if (!imageType) {
+      setOcrStatus("Nenhuma imagem encontrada na area de transferencia.");
+      return;
+    }
+
+    const clipboardItem = clipboardItems.find((item) => item.types.includes(imageType));
+    const blob = await clipboardItem.getType(imageType);
+    loadOcrImage(new File([blob], "print-colado.png", { type: imageType }));
+  } catch (error) {
+    setOcrStatus(`Nao foi possivel colar pelo botao. Clique na area de OCR e pressione Ctrl+V. Detalhe: ${error.message}`);
+    elements.ocrDropZone.focus();
+  }
+}
+
+function getFirstImageFile(files) {
+  return Array.from(files || []).find((file) => file.type.startsWith("image/")) || null;
+}
+
+function getClipboardImageFile(clipboardData) {
+  const fileFromFiles = getFirstImageFile(clipboardData?.files);
+
+  if (fileFromFiles) {
+    return fileFromFiles;
+  }
+
+  const imageItem = Array.from(clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
+  return imageItem?.getAsFile() || null;
 }
 
 function applyOcrToCandidate() {

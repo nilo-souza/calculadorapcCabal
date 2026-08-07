@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.5`.
+Versão atual: `v0.5.1`.
 
 ## Como usar
 
@@ -82,13 +82,20 @@ Fluxo recomendado:
 4. Revise o texto reconhecido.
 5. Clique em "Aplicar na arma nova".
 
-O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma.
+O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma. A biblioteca é carregada somente quando você clica em "Ler imagem".
 
 ## Validação atual
 
 Com os dois testes informados até agora, o erro médio absoluto está em torno de `5 PC`, com erro percentual médio abaixo de `0,05%`.
 
 ## Changelog
+
+### v0.5.1
+
+- Corrigido carregamento do app quando a CDN do OCR demora ou falha.
+- O `Tesseract.js` agora é carregado sob demanda ao clicar em "Ler imagem".
+- Melhorada a colagem de imagem com area focável, Ctrl+V e botão "Colar imagem".
+- Melhoradas as mensagens de erro/status do OCR.
 
 ### v0.5
 

@@ -10,7 +10,7 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">v0.5 local</p>
+          <p class="eyebrow">v0.5.1 local</p>
           <h1>Comparador de armas para Mago</h1>
           <p class="hero-text">
             Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
@@ -75,10 +75,10 @@
         <p class="hint">Selecione, arraste ou cole uma imagem do tooltip do item. Revise o texto lido antes de aplicar os atributos na arma nova.</p>
 
         <div class="ocr-grid">
-          <div class="ocr-drop-zone" id="ocr-drop-zone">
+          <div class="ocr-drop-zone" id="ocr-drop-zone" tabindex="0">
             <input id="ocr-image" type="file" accept="image/*" />
             <p>Arraste o print aqui ou use o seletor acima.</p>
-            <small>Tambem funciona colando uma imagem da area de transferencia.</small>
+            <small>Para colar: clique nesta area e pressione Ctrl+V, ou use o botao Colar imagem.</small>
             <img id="ocr-preview" alt="Previa do print selecionado" hidden />
           </div>
 
@@ -86,6 +86,7 @@
             <label for="ocr-text">Texto lido pelo OCR</label>
             <textarea id="ocr-text" placeholder="O texto reconhecido no print aparecera aqui. Voce pode editar antes de aplicar."></textarea>
             <div class="button-row ocr-actions">
+              <button class="secondary-button" type="button" id="paste-ocr-image">Colar imagem</button>
               <button type="button" id="run-ocr">Ler imagem</button>
               <button type="button" id="apply-ocr">Aplicar na arma nova</button>
               <button class="secondary-button" type="button" id="clear-ocr">Limpar OCR</button>
@@ -271,7 +272,6 @@
       </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
