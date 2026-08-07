@@ -2,7 +2,7 @@
 
 App web local para estimar a diferença de Pontos de Combate ao trocar uma arma de Mago e avaliar o custo-benefício da compra.
 
-Versão atual: `v0.6`.
+Versão atual: `v0.6.2`.
 
 ## Como usar
 
@@ -76,16 +76,15 @@ A versão `v0.5` adiciona leitura de print do tooltip do item usando OCR no nave
 
 Fluxo recomendado:
 
-1. Tire um print ou recorte do tooltip do item.
+1. Tire um print do tooltip do item.
 2. Selecione, arraste ou cole a imagem na área de OCR.
-3. Ajuste o recorte para isolar o tooltip, se o print tiver inventário ou fundo demais.
-4. Use o modo `Preto e branco`, que é o padrão recomendado para tooltips do Cabal.
-5. Clique em "Ler imagem" ou "Testar modos".
-6. Revise o texto reconhecido.
-7. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
-8. Clique em "Aplicar na arma nova".
+3. Clique em "Testar modos" para escolher automaticamente a melhor leitura, ou selecione um modo manualmente.
+4. Se selecionar um modo manualmente, clique em "Ler imagem".
+5. Revise o texto reconhecido.
+6. Se necessário, corrija linhas ignoradas escolhendo o atributo e o valor manualmente.
+7. Clique em "Aplicar na arma nova".
 
-O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma. A biblioteca é carregada somente quando você clica em "Ler imagem".
+O OCR usa `Tesseract.js` via CDN, então a página precisa de internet para carregar a biblioteca e os dados de idioma. A biblioteca é carregada somente quando você clica em "Ler imagem" ou "Testar modos".
 
 ## Validação atual
 
@@ -93,13 +92,23 @@ Com os dois testes informados até agora, o erro médio absoluto está em torno 
 
 ## Changelog
 
+### v0.6.2
+
+- Separados `Precisão` (`Attack Rate`, peso `3`) e `Acerto` (`Accuracy`, peso `6.5`) conforme a calculadora do Mr. Wormy.
+- O OCR agora aplica linhas `Acerto + N` no novo atributo `Acerto`, sem misturar com `Precisão`.
+
+### v0.6.1
+
+- Removido o recorte manual do OCR.
+- Mantidos o teste automático de modos e a prévia da imagem processada.
+- Melhorado o OCR para reconhecer `Técnica de Mágica Amp.` como `Amp. mágica`.
+
 ### v0.6
 
-- Adicionado recorte manual do tooltip por porcentagem.
 - Adicionada prévia da imagem processada que será enviada ao OCR.
 - Adicionado botão "Testar modos" para comparar `Preto e branco`, `Contraste`, `Ampliado` e `Original`.
 - O melhor modo é escolhido automaticamente com base nos atributos reconhecidos.
-- O recorte e modo OCR ficam salvos no navegador.
+- O modo OCR fica salvo no navegador.
 
 ### v0.5.4
 

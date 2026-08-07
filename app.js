@@ -53,6 +53,13 @@ const attributes = [
     defaultWeight: 3,
   },
   {
+    key: "hitAccuracy",
+    label: "Acerto",
+    unit: "pontos",
+    hint: "Accuracy na calculadora base.",
+    defaultWeight: 6.5,
+  },
+  {
     key: "evasion",
     label: "Evasão",
     unit: "pontos",
@@ -122,15 +129,19 @@ const ocrAttributePatterns = [
   },
   {
     key: "magicAmp",
-    labels: ["amp magica", "amplificacao magica", "tec magica amp", "tecnica magica amp", "todas as tec amp", "all skill amp"],
+    labels: ["amp magica", "magica amp", "amplificacao magica", "tec magica amp", "tecnica magica amp", "tecnica de magica amp", "tecnica de magia amp", "todas as tec amp", "all skill amp"],
   },
   {
     key: "swordAmp",
-    labels: ["amp espada", "tec espada amp", "tecnica espada amp", "sword amp"],
+    labels: ["amp espada", "espada amp", "tec espada amp", "tecnica espada amp", "tecnica de espada amp", "sword amp"],
   },
   {
     key: "accuracy",
     labels: ["precisao", "attack rate"],
+  },
+  {
+    key: "hitAccuracy",
+    labels: ["acerto", "acertos", "taxa de acerto", "accuracy", "hit accuracy", "hit rate"],
   },
   {
     key: "evasion",
@@ -201,7 +212,6 @@ const elements = {
   applyOcr: document.querySelector("#apply-ocr"),
   clearOcr: document.querySelector("#clear-ocr"),
   ocrStatus: document.querySelector("#ocr-status"),
-  resetOcrCrop: document.querySelector("#reset-ocr-crop"),
 };
 
 renderFields();
@@ -313,29 +323,12 @@ function bindStaticEvents() {
     updateProcessedPreview();
   });
 
-  document.querySelectorAll("[data-ocr-crop]").forEach((input) => {
-    input.addEventListener("input", () => {
-      state.ocr.crop[input.dataset.ocrCrop] = Number(input.value);
-      normalizeAndSaveOcrCrop();
-      syncOcrCropControls();
-      updateProcessedPreview();
-      saveState();
-    });
-  });
-
   elements.pasteOcrImage.addEventListener("click", pasteOcrImageFromClipboard);
   elements.runOcr.addEventListener("click", runOcrRecognition);
   elements.testOcrModes.addEventListener("click", testAllOcrModes);
   elements.applyOcr.addEventListener("click", applyOcrToCandidate);
   elements.clearOcr.addEventListener("click", clearOcr);
   elements.ocrStatus.addEventListener("click", applyIgnoredOcrLine);
-  elements.resetOcrCrop.addEventListener("click", () => {
-    state.ocr.crop = createDefaultOcrCrop();
-    syncOcrCropControls();
-    updateProcessedPreview();
-    saveState();
-    setOcrStatus("Recorte redefinido para imagem inteira.");
-  });
 
   elements.ocrDropZone.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -497,7 +490,6 @@ function syncFormValues() {
   elements.candidateSort.value = state.candidateSort;
   elements.ocrMode.value = state.ocr.mode;
   elements.ocrText.value = state.ocr.text || "";
-  syncOcrCropControls();
 
   Object.entries(state.market).forEach(([key, value]) => {
     setInputValue(`[data-market="${key}"]`, value);
@@ -734,19 +726,14 @@ async function recognizeOcrInput(ocrInput, logger) {
 
 async function prepareOcrImage(file, mode) {
   const image = await loadImageElement(file);
-  const crop = getNormalizedOcrCrop();
-  const sourceX = Math.round((image.naturalWidth * crop.left) / 100);
-  const sourceY = Math.round((image.naturalHeight * crop.top) / 100);
-  const sourceWidth = Math.max(1, Math.round((image.naturalWidth * crop.width) / 100));
-  const sourceHeight = Math.max(1, Math.round((image.naturalHeight * crop.height) / 100));
   const scale = mode === "original" ? 1 : 3;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", { willReadFrequently: true });
 
-  canvas.width = sourceWidth * scale;
-  canvas.height = sourceHeight * scale;
+  canvas.width = image.naturalWidth * scale;
+  canvas.height = image.naturalHeight * scale;
   context.imageSmoothingEnabled = false;
-  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   if (mode === "original") {
     return canvas;
@@ -888,50 +875,9 @@ async function testAllOcrModes() {
 
 function scoreOcrReport(text, report) {
   const uniqueAttributes = Object.keys(report.attributes).length;
-  const importantAttributes = ["magicAttack", "criticalRate", "criticalDamage", "magicAmp", "penetration"].filter((key) => key in report.attributes).length;
+  const importantAttributes = ["magicAttack", "criticalRate", "criticalDamage", "magicAmp", "accuracy", "hitAccuracy", "penetration"].filter((key) => key in report.attributes).length;
 
   return report.matches.length * 15 + uniqueAttributes * 20 + importantAttributes * 12 - report.ignored.length + Math.min(text.length, 500) / 100;
-}
-
-function createDefaultOcrCrop() {
-  return {
-    left: 0,
-    top: 0,
-    width: 100,
-    height: 100,
-  };
-}
-
-function getNormalizedOcrCrop() {
-  const crop = { ...createDefaultOcrCrop(), ...state.ocr.crop };
-  const left = clamp(Number(crop.left) || 0, 0, 95);
-  const top = clamp(Number(crop.top) || 0, 0, 95);
-  const width = clamp(Number(crop.width) || 100, 5, 100 - left);
-  const height = clamp(Number(crop.height) || 100, 5, 100 - top);
-
-  return { left, top, width, height };
-}
-
-function normalizeAndSaveOcrCrop() {
-  state.ocr.crop = getNormalizedOcrCrop();
-}
-
-function syncOcrCropControls() {
-  const crop = getNormalizedOcrCrop();
-  state.ocr.crop = crop;
-
-  Object.entries(crop).forEach(([key, value]) => {
-    const input = document.querySelector(`[data-ocr-crop="${key}"]`);
-    const label = document.querySelector(`#ocr-crop-${key}-value`);
-
-    if (input) {
-      input.value = value;
-    }
-
-    if (label) {
-      label.textContent = `${formatNumber(value, 0)}%`;
-    }
-  });
 }
 
 function loadTesseract() {
@@ -1443,7 +1389,7 @@ function createDefaultState(validationHistory) {
     market: { ...defaultMarket },
     candidateOptions: [],
     candidateSort: "value",
-    ocr: { text: "", mode: "threshold", crop: createDefaultOcrCrop() },
+    ocr: { text: "", mode: "threshold" },
     validationHistory: validationHistory.map((record) => ({ ...record })),
   };
 }
@@ -1466,9 +1412,8 @@ function loadState() {
       candidateOptions: Array.isArray(storedState.candidateOptions) ? storedState.candidateOptions : defaultState.candidateOptions,
       candidateSort: storedState.candidateSort || defaultState.candidateSort,
       ocr: {
-        ...defaultState.ocr,
-        ...storedState.ocr,
-        crop: { ...defaultState.ocr.crop, ...storedState.ocr?.crop },
+        text: storedState.ocr?.text || defaultState.ocr.text,
+        mode: storedState.ocr?.mode || defaultState.ocr.mode,
       },
       validationHistory: Array.isArray(storedState.validationHistory) ? storedState.validationHistory : defaultState.validationHistory,
     };

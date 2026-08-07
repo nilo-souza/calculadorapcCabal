@@ -10,7 +10,7 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">v0.6 local</p>
+          <p class="eyebrow">v0.6.2 local</p>
           <h1>Comparador de armas para Mago</h1>
           <p class="hero-text">
             Informe os atributos da arma atual e da arma candidata. A ferramenta estima a diferença de Pontos de Combate usando pesos editáveis.
@@ -80,26 +80,6 @@
             <p>Arraste o print aqui ou use o seletor acima.</p>
             <small>Para colar: clique nesta area e pressione Ctrl+V, ou use o botao Colar imagem.</small>
             <img id="ocr-preview" alt="Previa do print selecionado" hidden />
-
-            <div class="ocr-crop-panel">
-              <div class="ocr-crop-header">
-                <strong>Recorte do tooltip</strong>
-                <button class="secondary-button table-button" type="button" id="reset-ocr-crop">Imagem inteira</button>
-              </div>
-              <div class="ocr-crop-grid">
-                <label for="ocr-crop-left">Esquerda <span id="ocr-crop-left-value">0%</span></label>
-                <input id="ocr-crop-left" data-ocr-crop="left" type="range" min="0" max="95" step="1" />
-
-                <label for="ocr-crop-top">Topo <span id="ocr-crop-top-value">0%</span></label>
-                <input id="ocr-crop-top" data-ocr-crop="top" type="range" min="0" max="95" step="1" />
-
-                <label for="ocr-crop-width">Largura <span id="ocr-crop-width-value">100%</span></label>
-                <input id="ocr-crop-width" data-ocr-crop="width" type="range" min="5" max="100" step="1" />
-
-                <label for="ocr-crop-height">Altura <span id="ocr-crop-height-value">100%</span></label>
-                <input id="ocr-crop-height" data-ocr-crop="height" type="range" min="5" max="100" step="1" />
-              </div>
-            </div>
 
             <div class="ocr-processed-preview-wrap">
               <strong>Prévia enviada ao OCR</strong>
